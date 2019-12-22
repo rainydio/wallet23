@@ -1,0 +1,115 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+"lib.fif" include
+
+
+newkeypair constant key0pub constant key0priv
+newkeypair constant key1pub constant key1priv
+newkeypair constant key2pub constant key2priv
+newkeypair constant key3pub constant key3priv
+
+	<b 1 32 u, b{0} s, key2pub B, key3pub B, key1pub B, b{0} s, b>
+constant root
+
+<b b> constant cncl
+test-address 1 Gram* "" msgint-transfer constant msg1
+test-address 2 Gram* "" msgint-transfer constant msg2
+test-address 3 Gram* "" msgint-transfer constant msg3
+
+
+|
+	"K1_MSG1" 1 now 30 + msg1 test-address key1priv msgext pair ,
+	"K1_CNCL" 1 now 30 + cncl test-address key1priv msgext pair ,
+	"K1_MSG3" 1 now 30 + msg3 test-address key1priv msgext pair ,
+
+	"K2_MSG1" 1 now 30 + msg1 test-address key2priv msgext pair ,
+	"K2_MSG2" 1 now 30 + msg2 test-address key2priv msgext pair ,
+	"K2_CNCL" 1 now 30 + cncl test-address key2priv msgext pair ,
+
+	"K3_CNCL" 1 now 30 + cncl test-address key3priv msgext pair ,
+	"K3_MSG2" 1 now 30 + msg2 test-address key3priv msgext pair ,
+	"K3_MSG3" 1 now 30 + msg3 test-address key3priv msgext pair ,
+
+constant test-messages
+
+{ over $len - "" swap { " " $+ } swap 0 max times swap $+ } : pad-left
+{ over $len - "" swap { " " $+ } swap 0 max times $+ } : pad-right
+
+
+{
+	""
+	over null? not {
+		over hashu msg1 hashu = { "MSG1" $+ } if
+		over hashu msg2 hashu = { "MSG2" $+ } if
+		over hashu msg3 hashu = { "MSG3" $+ } if
+		over hashu cncl hashu = { "CNCL" $+ } if
+	} if
+	4 pad-left
+	nip
+} : test-iter-msg$
+
+
+{                                                                                // pad, root, gas_total
+	0 {                                                                            // pad, root, gas_total, i
+		test-messages over [] unpair                                                 // pad, root, gas_total, i, msg_name, msg
+		4 pick "code.fif" include rot                                                // pad, root, gas_total, i, msg_name, root, code, msg
+		test-run-external                                                            // pad, root, gas_total, i, msg_name, root_next, c5, err, gas
+
+		1 pick ERR_SEQNO =
+		2 pick ERR_EXP = or
+		2 pick ERR_SIG = or
+		2 pick ERR_REPLAY = or
+		not {
+			1 pick 0 = { "OK" } { "E" 2 pick (.) $+ } cond
+			5 pad-right type
+
+			"" 9 pick 0 <> {
+				{ +"  " } 10 pick 1 - times
+				+"- "
+			} if 5 pick $+
+			16 pad-right type
+
+			""
+			3 pick msg1 3 has-sendrawmsg { "MSG1" $+ } if
+			3 pick msg2 3 has-sendrawmsg { "MSG2" $+ } if
+			3 pick msg3 3 has-sendrawmsg { "MSG3" $+ } if
+			7 pad-left type
+
+			3 pick root-seqno (.)
+			4 pad-left type
+
+			."   "
+			3 pick key1pub root-key-msg test-iter-msg$ type ." "
+			3 pick key2pub root-key-msg test-iter-msg$ type ." "
+			3 pick key3pub root-key-msg test-iter-msg$ type
+
+			."   "
+			0 pick (.)
+			4 pad-left type
+
+			."   "
+			0 pick 7 pick + (.)
+			5 pad-left type
+
+			cr
+		} if
+
+		1 pick 0 = {
+			8 pick 1+ 4 pick 8 pick 3 pick +
+			@' test-iter
+		} if
+
+		{ drop } 5 times
+		1+
+	} test-messages count times
+	{ drop } 4 times
+} : test-iter
+
+
+."ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL" cr
+."================================================================" cr
+0 root 0 test-iter
+."================================================================" cr
+
+// */

@@ -1,0 +1,177 @@
+#!/bin/env -S fift -s
+
+"Asm.fif" include
+"TonUtil.fif" include
+"GetOpt.fif" include
+"lib.fif" include
+
+{
+	1 pick null? { false } { 1 pick 1 pick $= } cond
+	-rot drop drop
+} : $=?
+
+1 $() constant keyfile { keyfile null? not } : keyfile?
+
+2 $() constant cmd
+cmd "transfer" $=? { 3 $() } { null } cond constant cmd-transfer-destination-address
+cmd "transfer" $=? { 4 $() } { null } cond constant cmd-transfer-amount
+cmd "transfer" $=? { 5 $() } { null } cond constant cmd-transfer-comment
+cmd "change-key" $=? { 3 $() } { null } cond constant cmd-change-key-keyfile
+
+
+keyfile? { keyfile load-keypair } { null null } cond constant keypriv constant keypub
+"wallet-address.addr" load-address 2constant address
+
+
+{
+	dup <s empty? {
+		drop "cancelation"
+	} {
+		<s 2 u@+ nip 1 i@+ 6 u@+ nip 8 i@+ 256 u@+ Gram@
+		2 pick address drop = 2 pick address nip = and {
+			{ drop } 4 times "change key"
+		} {
+			"transfer " swap (.GR) $+ "GR$ to " $+ 3 -roll rot 7 swap - smca>$ $+
+		} cond
+	} cond
+} : msg-description
+
+cr
+."wget https://test.ton.org/ton-lite-client-test1.config.json -O ton-global.config" cr
+."  download testnet lite-client config" cr
+cr
+
+."lite-client -c 'last' \" cr
+."  -c 'saveaccount wallet-state.boc " address 7 smca>$ type ."' \" cr
+."  -c 'sendfile wallet-query.boc'; \" cr
+$0 type keyfile? { ." " keyfile type } if cr
+cr
+cr
+
+"wallet-state.boc" file>B B>boc <s
+ref@+ constant code
+ref@  constant root
+
+root root-seqno     constant seqno
+root root-last-msg  constant last-msg
+root root-last-key  constant last-key
+root root-third-key constant third-key
+root root-prev-key  constant prev-key
+root root-prev-msg  constant prev-msg
+
+keypub null? { null } {
+	root keypub root-key-msg
+} cond constant key-msg
+
+address 7 smca>$ type ." "
+keyfile null? {
+	keyfile type ." "
+	keypub last-key B= { ."(last) "} if
+	keypub prev-key B= { ."(prev) "} if
+	keypub third-key B= { ."(third) "} if
+} ifnot
+."#" seqno (.) type .":" cr
+
+last-msg null? { ."  - no orders" cr } if
+last-msg null? not {
+	."  - " last-msg msg-description type
+	last-key keypub B= {
+		." (by you, waiting for confirmation)"
+	} {
+		." (waiting for confirmation)"
+	} cond
+	cr
+} if
+prev-msg null? not {
+	."  - " prev-msg msg-description type
+	prev-key keypub B= {
+		." (by you, waiting for confirmation)"
+	} {
+		." (waiting for confirmation)"
+	} cond
+	cr
+} if
+cr
+
+begin-options
+	keyfile? {
+		last-msg null? not
+		last-key keypub B= not and {
+			" " keyfile $+ +" confirm" +cr
+			+"  confirm (last) " last-msg msg-description $+ +cr
+			generic-help
+		} if
+
+		prev-msg null? not
+		prev-key keypub B= not and {
+			" " keyfile $+ +" confirm prev" +cr
+			+"  confirm (previous) " prev-msg msg-description $+ +cr
+			generic-help
+		} if
+
+		last-msg null? not
+		key-msg null? and {
+			" " keyfile $+ +" cancel" +cr
+			+"  create request to cancel pending orders" +cr
+			generic-help
+		} if
+
+		key-msg null? {
+			" " keyfile $+ +" transfer <destination address> <amount> <comment>" +cr
+			+"  create request to transfer <amount> GR$ to <destination address>" +cr
+			generic-help
+
+			" " keyfile $+ +" change-key <new key file>" +cr
+			+"  create request to change key that can access contract from " keyfile $+ +" to <new key file>" +cr
+			generic-help
+		} if
+	} if
+
+	" <key file>" +cr
+	+"  display wallet state and list commands available to <key file>" +cr
+	generic-help
+
+	" " +cr
+	+"  display wallet state" +cr
+	generic-help
+parse-options show-options-help
+
+
+cmd "transfer" $=? $# 4 >= and {
+	seqno now 180 +
+	cmd-transfer-destination-address false parse-load-address {
+		cmd-transfer-destination-address type ." is bounceable address"
+		2 halt
+	} if
+	cmd-transfer-amount $>GR
+	cmd-transfer-comment null? { "" } { cmd-transfer-comment } cond
+	msgint-transfer
+	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+} if
+
+cmd "change-key" $=? $# 3 >= and {
+	seqno now 180 +
+	address
+	keypub
+	cmd-change-key-keyfile load-generate-keypair drop
+	msgint-change-key
+	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+} if
+
+cmd "confirm" $=? last-msg null? not and {
+	seqno now 180 +
+	last-msg
+	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+} if
+
+cmd "confirm-prev" $=? {
+	seqno now 180 +
+	prev-msg
+	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+} if
+
+cmd "cancel" $=? {
+	seqno now 180 +
+	<b b>
+	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+} if

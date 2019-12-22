@@ -1,0 +1,148 @@
+"code.fif" include drop
+
+{
+	1 u@+ swap { ref@+ swap } { null swap } cond
+} : nullref@+
+
+{
+	nullref@+ drop
+} : nullref@
+
+{
+	2dup <s s-fits? {
+		swap false 1 u, swap <s s,
+	} {
+		swap true 1 u, swap ref,
+	} cond
+} : body,
+
+
+{
+	swap 3 -roll 3 -roll                                                           // dest,addr, amount, comment
+	<b b{01} s, b{0000} s, b{100} s, -rot addr, swap Gram, 0 106 u,
+		swap simple-transfer-body body,
+	b>
+} : msgint-transfer
+
+{                                                                                // contract,addr, old_key, new_key
+	3 -roll -rot                                                                   // new_key, old_key, contract,addr
+	<b b{01} s, b{0000} s, b{100} s, -rot addr, 1 Gram* Gram, 0 107 u,
+		OP_CHANGE_KEY 32 u, swap B, swap B,
+	b>
+} : msgint-change-key
+
+{                                                                                // seqno, valid_until, msg_out, contract,addr, priv
+	6 0 reverse                                                                    // priv, addr,contract, msg_out, valid_until, seqno
+	<b swap 32 u, swap 32 u, swap ref, b>                                          // priv, addr,contract, payload
+	4 0 reverse                                                                    // payload, contract,addr, priv
+	<b b{100} s, 3 pick 3 pick addr, 4 pick <s s, b> hashu                         // payload, contract,addr, priv, signed_hash
+	swap ed25519_sign_uint -rot                                                    // payload, signature, contract,addr
+	<b b{1000} s, b{100} s, -rot addr, 0 Gram, b{00} s, swap B, swap <s s, b>      // msg
+} : msgext
+
+{
+	<s 32 u@
+} : root-seqno
+
+{
+	<s 32 u@+ nullref@
+	nip
+} : root-last-msg
+
+{
+	<s 32 u@+ nullref@+ 256 u@ 256 u>B
+	3 0 reverse { drop } 2 times
+} : root-last-key
+
+{
+	<s 32 u@+ nullref@+ 256 u@+ 256 u@ 256 u>B
+	4 0 reverse { drop } 3 times
+} : root-third-key
+
+{
+	<s 32 u@+ nullref@+ 256 u@+ 256 u@+ 256 u@ 256 u>B
+	5 0 reverse { drop } 4 times
+} : root-prev-key
+
+{
+	<s 32 u@+ nullref@+ 256 u@+ 256 u@+ 256 u@+ nullref@
+	6 0 reverse { drop } 5 times
+} : root-prev-msg
+
+{                                                                                // root, keypub
+	over root-third-key over B= {
+		2drop null
+	} {
+		over root-prev-key over B= {
+			drop root-prev-msg
+		} {
+			over root-last-key over B= {
+				drop root-last-msg
+			} {
+				true abort"key not found"
+			} cond
+		} cond
+	} cond
+} : root-key-msg
+
+
+	0 0x0000111100001111000011110000111100001111000011110000111100001111
+2constant test-address
+
+{                                                                                // root, code, msg
+	// saving stack
+	depth 1- -roll
+	depth 1- -roll
+	depth 1- -roll
+	depth 3 - tuple =: stack-saved
+
+	dup <s
+		4 u@+ nip
+		3 u@+ 8 i@+ 256 u@+ Gram@+ nip
+		2 u@+ nip
+
+	4 0 reverse <b swap 3 u, swap 8 i, swap 256 u, b> <s                           // root, code, msg, msg_slice, myaddr
+	| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , swap , 1 tuple                             // root, code, msg, msg_slice, c7
+	-1 swap                                                                        // root, code, msg, msg_slice, fn_id, c7
+	4 roll <{ swap CALLREF c5 PUSH }>s swap                                        // root, msg, msg_slice, fn, code_slice, c7
+	5 roll swap                                                                    // msg, msg_slice, fn, code_slice, root, c7
+	10000                                                                          // msg, msg_slice, fn, code_slice, root, c7, gas_limit
+	gasrunvmctx                                                                    // (c5, 0) | (0, err), root', gas_consumed
+	2 pick 0 = {                                                                   // c5, 0, root, gas_consumed
+		rot drop rot swap 0 swap                                                     // root, c5, 0, gas_consumed
+		152 -
+	} {                                                                            // 0, err, root, gas_consumed
+		3 roll drop <b b> swap                                                       // err, root, c5, gas_consumed
+		3 roll swap                                                                  // root, c5, err, gas_consumed
+	} cond                                                                         // root, c5, err, gas_consumed
+
+	// removing stack pollution
+	4 tuple =: run-saved
+	{ drop } depth 1- times
+	@' stack-saved explode drop
+	@' run-saved 4 untuple
+} : test-run-external
+
+{                                                                                // root, code, method
+	-rot <s swap runvm
+	over 0<> { abort"test-run-method1" } if
+	nip swap
+} : test-run-method1
+
+{                                                                                // c5, msgint, mode
+	rot <s                                                                         // msgint, mode, c5_slice
+	dup empty? { drop drop drop false } {
+		ref@+ 3 -roll                                                                // c5_next, msgint, mode, c5_slice
+		32 u@+ swap                                                                  // c5_next, msgint, mode, args_slice, action
+		0x0EC3C86D = {                                                               // c5_next, msgint, mode, args_slice
+			8 u@+ ref@                                                                 // c5_next, msgint, mode, sent_mode, sent_msgint
+			hashu 3 pick hashu = swap 2 pick = and {
+				drop drop drop true
+			} {
+				@' has-sendrawmsg
+			} cond
+		} {
+			drop @' has-sendrawmsg
+		} cond
+	} cond
+} : has-sendrawmsg

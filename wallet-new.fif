@@ -1,0 +1,46 @@
+#!/bin/env -S fift -s
+
+"Asm.fif" include
+"TonUtil.fif" include
+"GetOpt.fif" include
+
+begin-options
+	" <workchain id> [nonce]" +cr
+	+"  create new wallet in <workchain id> adding [nonce] to stateinit" +cr
+	generic-help
+parse-options
+
+$# 1 < { show-options-help 100 halt } if
+
+$1 parse-int constant workchain-id
+$# 2 >= { 2 $() parse-int } { 0 } cond constant nonce
+
+"key1.pk" load-generate-keypair drop constant key1pub
+"key2.pk" load-generate-keypair drop constant key2pub
+"key3.pk" load-generate-keypair drop constant key3pub
+
+	<{ SETCP0 ACCEPT nonce INT "code.fif" include PUSHREF SETCODE }>c
+constant code
+	<b 1 32 u, b{0} s, key2pub B, key3pub B, key1pub B, b{0} s, b>
+constant root
+	<b b{0011} s, code ref, root ref, dictnew dict, b>
+constant stateinit
+	workchain-id stateinit hashu
+2constant address
+	<b b{1000100} s, address addr, b{000010} s, stateinit <s s, b{0} s, b>
+constant msg-constructor
+
+
+address "wallet-address.addr" save-address-verbose
+msg-constructor 2 boc+>B dup "wallet-new.boc" B>file
+cr
+
+."wget https://test.ton.org/ton-lite-client-test1.config.json -O ton-global.config" cr
+."  download testnet lite-client config" cr
+cr
+."lite-client -c 'sendfile wallet-new.boc'" cr
+."  send constructor message" cr
+cr
+."lite-client -c 'last' -c 'saveaccount wallet-state.boc " address 7 smca>$ type ."'" cr
+."  download latest wallet state" cr
+cr
