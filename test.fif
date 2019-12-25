@@ -60,8 +60,6 @@ constant test-messages
 		test-run-external                                                            // messages, pad, root, gas_total, i, msg_name, root_next, c5, err, gas
 
 		1 pick ERR_SEQNO =
-		2 pick ERR_EXP = or
-		2 pick ERR_SIG = or
 		2 pick ERR_REPLAY = or
 		not {
 			1 pick 0 = { "OK" } { "E" 2 pick (.) $+ } cond
