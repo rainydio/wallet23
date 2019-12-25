@@ -1,3 +1,4 @@
+"Asm.fif" include
 "code.fif" include drop
 
 {
@@ -85,42 +86,50 @@
 	} cond
 } : root-key-msg
 
-
 	0 0x0000111100001111000011110000111100001111000011110000111100001111
 2constant test-address
 
-{                                                                                // root, code, msg
-	// saving stack
-	depth 1- -roll
-	depth 1- -roll
-	depth 1- -roll
-	depth 3 - tuple =: stack-saved
+// (root, code_filename, msgext) -> (root', c5, err, gas_consumed, accepted)
+{
+	{
+		x{F800} @addop
+		c7 PUSH 0 INT 25 INT SETINDEXVARQ c7 POP
+	} : ACCEPT
 
-	dup <s
-		4 u@+ nip
-		3 u@+ 8 i@+ 256 u@+ Gram@+ nip
-		2 u@+ nip
+	{
+		x{F801} @addop
+		c7 PUSH 0 INT 25 INT SETINDEXVARQ c7 POP
+	} : SETGASLIMIT
 
-	4 0 reverse <b swap 3 u, swap 8 i, swap 256 u, b> <s                           // root, code, msg, msg_slice, myaddr
-	| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , swap , 1 tuple                             // root, code, msg, msg_slice, c7
-	-1 swap                                                                        // root, code, msg, msg_slice, fn_id, c7
-	4 roll <{ swap CALLREF c5 PUSH }>s swap                                        // root, msg, msg_slice, fn, code_slice, c7
-	5 roll swap                                                                    // msg, msg_slice, fn, code_slice, root, c7
-	10000                                                                          // msg, msg_slice, fn, code_slice, root, c7, gas_limit
-	gasrunvmctx                                                                    // (c5, 0) | (0, err), root', gas_consumed
-	2 pick 0 = {                                                                   // c5, 0, root, gas_consumed
-		rot drop rot swap 0 swap                                                     // root, c5, 0, gas_consumed
-		152 -
-	} {                                                                            // 0, err, root, gas_consumed
-		3 roll drop <b b> swap                                                       // err, root, c5, gas_consumed
-		3 roll swap                                                                  // root, c5, err, gas_consumed
-	} cond                                                                         // root, c5, err, gas_consumed
 
-	// removing stack pollution
-	4 tuple =: run-saved
-	{ drop } depth 1- times
-	@' stack-saved explode drop
-	@' run-saved 4 untuple
+	<s 4 u@+ nip 3 u@+ 8 i@+ 256 u@+ Gram@+ nip 2 u@+ nip
+	4 0 reverse <b swap 3 u, swap 8 i, swap 256 u, b> <s
+	| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , swap , 1 tuple                             // root, code_filename, msgext_slice, c7
+	rot                                                                            // root, msgext_slice, c7, code_filename
+
+	<{
+		c7 PUSH 10000 INT 25 INT SETINDEXVARQ c7 POP
+		<{
+			rot include CALLREF
+			0 INT
+		}> PUSHCONT <{
+			NIP
+		}> PUSHCONT 2 1 TRYARGS
+		c5 PUSH
+		c7 PUSH
+	}>s                                                                            // root, msgext_slice, c7, code_slice
+
+	-1 -rot swap 4 roll swap                                                       // msgext_slice, -1, code_slice, root, c7
+	10430
+	gasrunvmctx                                                                    // err, c5, c7', 0, root', gas_consumed
+
+	rot drop                                                                       // err, c5, c7, root, gas_consumed
+	rot 25 [] 0 = swap                                                             // err, c5, root, accepted, gas_consumed
+	over { 578 } { 430 } cond - swap                                               // err, c5, root, gas_consumed', accepted
+	4 2 exch2                                                                      // root, c5, err, gas_consumed, accepted
+
+	{ x{F800} @addop } : ACCEPT
+	{ x{F801} @addop } : SETGASLIMIT
 } : test-run-external
 
 {                                                                                // root, code, method

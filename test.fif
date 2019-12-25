@@ -53,15 +53,13 @@ constant test-messages
 } : test-iter-msg$
 
 
-{                                                                                // messages, pad, root, gas_total
-	0 {                                                                            // messages, pad, root, gas_total, i
-		4 pick over [] unpair                                                        // messages, pad, root, gas_total, i, msg_name, msg
-		4 pick "code.fif" include rot                                                // messages, pad, root, gas_total, i, msg_name, root, code, msg
-		test-run-external                                                            // messages, pad, root, gas_total, i, msg_name, root_next, c5, err, gas
+{                                                                                // msgs, pad, root, gas_total
+	0 {                                                                            // msgs, pad, root, gas_total, i
+		4 pick over [] unpair                                                        // msgs, pad, root, gas_total, i, msg_name, msg
+		4 pick "code.fif" rot                                                        // msgs, pad, root, gas_total, i, msg_name, root, code_filename, msg
+		test-run-external {                                                          // msgs, pad, root, gas_total, i, msg_name, root_next, c5, err, gas_consumed
+			// print log line if message was accepted
 
-		1 pick ERR_SEQNO =
-		2 pick ERR_REPLAY = or
-		not {
 			1 pick 0 = { "OK" } { "E" 2 pick (.) $+ } cond
 			5 pad-right type
 
@@ -94,9 +92,7 @@ constant test-messages
 			5 pad-left type
 
 			cr
-		} if
 
-		1 pick 0 = {
 			test-messages
 			9 pick 1+ 5 pick 9 pick 4 pick +
 			@' test-iter
