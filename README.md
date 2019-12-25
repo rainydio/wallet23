@@ -116,11 +116,11 @@ Contract is optimized for two keys interacting in turns. When third key is invol
 ```
 ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
 ================================================================
-OK   K1_MSG1                   1   MSG1             2666    2666
-OK   - K2_MSG1          MSG1   2                    3389    6055
-OK   - K2_MSG2                 1   MSG1 MSG2        2790    5456
-OK     - K2_MSG1        MSG1   2                    3493    8949
-OK     - K3_CNCL               2                    3130    8586
+OK   KEY1_MSG1                 1   MSG1             2666    2666
+OK   - KEY2_MSG1        MSG1   2                    3389    6055
+OK   - KEY2_MSG2               1   MSG1 MSG2        2790    5456
+OK     - KEY1_MSG2      MSG2   2                    3389    8845
+OK     - KEY2_MSG1      MSG1   2                    3493    8949
 ...
 ```
 
