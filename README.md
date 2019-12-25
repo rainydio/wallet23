@@ -53,12 +53,14 @@ The user may be contacted by phone for confirmation. It's similar to what banks 
 
 ## Technicalities
 
-The contract is quite small and is written in ASM. There are couple of example usage scripts `wallet-new.fif` and `wallet-query.fif`. The later has relatively rich interface and requires wallet state to be downloaded from chain. Instructions how to do that a printed by scripts. To play with them create new empty directory to hold wallet files.
+The contract is quite small and is written in ASM. There are couple of example usage scripts `wallet-new.fif` and `wallet-query.fif`. The later has relatively rich interface and requires wallet state to be downloaded from chain. Instructions how to do that are printed by scripts.
+
+Also there is `wallet.sh` script ([example usage video]), create new empty directory to hold wallet files to play with it.
 
 ```sh
 $ mkdir mywallet
 $ cd mywallet
-$ ../wallet-new.fif
+$ ../wallet.sh
 ```
 
 ### Wallet constructor
@@ -73,17 +75,20 @@ This way contract doesn't need any special checks for first message (if seqno is
 
 ### Signing contract address
 
-Instead the hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different shard)that is using same public key and similar payload structure.
+Instead the hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different shard) that is using same public key and similar payload structure.
 
 ### Send raw message mode is set to 3
 
 There is no reason to allow user to set message flags. So the first two flags, that are absolutely required are used:
 
-- _+1 sender wants to pay transfer fees separately_ there is no-one else to pay those fees.
-- _+2 any errors arising while processing this message during the action phase should be
-  ignored_ otherwise state will be reverted, and a faulty external message can be replayed.
-- _+64 messages that carry all the remaining value of the inbound message_ there is no value attached to inbound external message.
-- _+128 messages that are to carry all the remaining balance of the current smart contract_ although has potential use (quite dangerous) supporting it costs more gas that it can save.
+- _+1 Sender wants to pay transfer fees separately._
+  There is no-one else to pay those fees.
+- _+2 Any errors arising while processing this message during the action phase should be ignored._
+  Otherwise state will be reverted, and a faulty external message can be replayed.
+- _+64 Messages that carry all the remaining value of the inbound message._
+  There is no value attached to inbound external message.
+- _+128 Messages that are to carry all the remaining balance of the current smart contract._
+  Although has potential use (quite dangerous) supporting it costs more gas that it can save.
 
 ### Valid until for incoming message
 
@@ -131,3 +136,5 @@ $ fift -s test.fif 0 4 > test-report.txt; fift -s test.fif 4 4 >> test-report.tx
 ```
 
 This way it's super easy to spot any errors and to track gas usage.
+
+[example usage video]: https://youtu.be/1Si--TuRiTE

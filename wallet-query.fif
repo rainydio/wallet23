@@ -104,7 +104,7 @@ begin-options
 
 		prev-msg null? not
 		prev-key keypub B= not and {
-			" " keyfile $+ +" confirm prev" +cr
+			" " keyfile $+ +" confirm-prev" +cr
 			+"  confirm (previous) " prev-msg msg-description $+ +cr
 			generic-help
 		} if
@@ -137,7 +137,8 @@ begin-options
 parse-options show-options-help
 
 
-cmd "transfer" $=? $# 4 >= and {
+cmd "transfer" $=? $# 4 >= and
+key-msg null? and {
 	seqno now 180 +
 	cmd-transfer-destination-address false parse-load-address {
 		cmd-transfer-destination-address type ." is bounceable address"
@@ -147,31 +148,45 @@ cmd "transfer" $=? $# 4 >= and {
 	cmd-transfer-comment null? { "" } { cmd-transfer-comment } cond
 	msgint-transfer
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+	bye
 } if
 
-cmd "change-key" $=? $# 3 >= and {
+cmd "change-key" $=? $# 3 >= and
+key-msg null? and {
 	seqno now 180 +
 	address
 	keypub
 	cmd-change-key-keyfile load-generate-keypair drop
 	msgint-change-key
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+	bye
 } if
 
-cmd "confirm" $=? last-msg null? not and {
+cmd "confirm" $=?
+last-msg null? not and
+last-key keypub B= not and {
 	seqno now 180 +
 	last-msg
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+	bye
 } if
 
-cmd "confirm-prev" $=? {
+cmd "confirm-prev" $=?
+prev-msg null? not and
+prev-key keypub B= not and {
 	seqno now 180 +
 	prev-msg
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+	bye
 } if
 
-cmd "cancel" $=? {
+cmd "cancel" $=?
+last-msg null? not and
+key-msg null? and {
 	seqno now 180 +
 	<b b>
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
+	bye
 } if
+
+1 halt

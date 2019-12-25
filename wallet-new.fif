@@ -32,6 +32,7 @@ constant msg-constructor
 
 
 address "wallet-address.addr" save-address-verbose
+address 7 smca>$ $>s dup sbits 8 / B@ "wallet-address.txt" B>file
 msg-constructor 2 boc+>B dup "wallet-new.boc" B>file
 cr
 
