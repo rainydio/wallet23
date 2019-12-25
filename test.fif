@@ -19,17 +19,20 @@ test-address 3 Gram* "" msgint-transfer constant msg3
 
 
 |
-	"K1_MSG1" 1 now 30 + msg1 test-address key1priv msgext pair ,
-	"K1_CNCL" 1 now 30 + cncl test-address key1priv msgext pair ,
-	"K1_MSG3" 1 now 30 + msg3 test-address key1priv msgext pair ,
+	"KEY1_MSG1" 1 now 30 + msg1 test-address key1priv msgext pair ,
+	"KEY1_MSG2" 1 now 30 + msg2 test-address key1priv msgext pair ,
+	"KEY1_MSG3" 1 now 30 + msg3 test-address key1priv msgext pair ,
+	"KEY1_CNCL" 1 now 30 + cncl test-address key1priv msgext pair ,
 
-	"K2_MSG1" 1 now 30 + msg1 test-address key2priv msgext pair ,
-	"K2_MSG2" 1 now 30 + msg2 test-address key2priv msgext pair ,
-	"K2_CNCL" 1 now 30 + cncl test-address key2priv msgext pair ,
+	"KEY2_MSG1" 1 now 30 + msg1 test-address key2priv msgext pair ,
+	"KEY2_MSG2" 1 now 30 + msg2 test-address key2priv msgext pair ,
+	"KEY2_MSG3" 1 now 30 + msg3 test-address key2priv msgext pair ,
+	"KEY2_CNCL" 1 now 30 + cncl test-address key2priv msgext pair ,
 
-	"K3_CNCL" 1 now 30 + cncl test-address key3priv msgext pair ,
-	"K3_MSG2" 1 now 30 + msg2 test-address key3priv msgext pair ,
-	"K3_MSG3" 1 now 30 + msg3 test-address key3priv msgext pair ,
+	"KEY3_MSG1" 1 now 30 + msg1 test-address key3priv msgext pair ,
+	"KEY3_MSG2" 1 now 30 + msg2 test-address key3priv msgext pair ,
+	"KEY3_MSG3" 1 now 30 + msg3 test-address key3priv msgext pair ,
+	"KEY3_CNCL" 1 now 30 + cncl test-address key3priv msgext pair ,
 
 constant test-messages
 
@@ -50,11 +53,11 @@ constant test-messages
 } : test-iter-msg$
 
 
-{                                                                                // pad, root, gas_total
-	0 {                                                                            // pad, root, gas_total, i
-		test-messages over [] unpair                                                 // pad, root, gas_total, i, msg_name, msg
-		4 pick "code.fif" include rot                                                // pad, root, gas_total, i, msg_name, root, code, msg
-		test-run-external                                                            // pad, root, gas_total, i, msg_name, root_next, c5, err, gas
+{                                                                                // messages, pad, root, gas_total
+	0 {                                                                            // messages, pad, root, gas_total, i
+		4 pick over [] unpair                                                        // messages, pad, root, gas_total, i, msg_name, msg
+		4 pick "code.fif" include rot                                                // messages, pad, root, gas_total, i, msg_name, root, code, msg
+		test-run-external                                                            // messages, pad, root, gas_total, i, msg_name, root_next, c5, err, gas
 
 		1 pick ERR_SEQNO =
 		2 pick ERR_EXP = or
@@ -96,20 +99,27 @@ constant test-messages
 		} if
 
 		1 pick 0 = {
-			8 pick 1+ 4 pick 8 pick 3 pick +
+			test-messages
+			9 pick 1+ 5 pick 9 pick 4 pick +
 			@' test-iter
 		} if
 
 		{ drop } 5 times
 		1+
-	} test-messages count times
-	{ drop } 4 times
+	} 5 pick count times
+	{ drop } 5 times
 } : test-iter
 
 
 ."ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL" cr
 ."================================================================" cr
+
+| $1 parse-int {
+	test-messages over [] rot swap , swap 1 +
+} $2 parse-int times drop
+
 0 root 0 test-iter
+
 ."================================================================" cr
 
 // */
