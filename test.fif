@@ -48,6 +48,14 @@ constant test-messages-key3
 constant test-messages
 
 
+<b b{0000} s, b{100} s, test-address addr, b> <b 1 32 u, key0pub B, key0pub B, b> <s
+0 "code.fif" include <s root
+| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , <b b{100} s, test-address addr, b> <s , 1 tuple
+runvmctx
+
+1 halt
+
+
 { over $len - "" swap { " " $+ } swap 0 max times swap $+ } : pad-left
 { over $len - "" swap { " " $+ } swap 0 max times $+ } : pad-right
 
