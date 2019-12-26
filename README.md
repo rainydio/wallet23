@@ -49,7 +49,7 @@ Because signatures are collected on-chain, it's trivial for a third party to ste
 - Blocking suspiciously large transfers
 - Blocking messages that interact with vulnerable contracts
 
-The user may be contacted by phone for confirmation. It's similar to what banks usually do. But in this case protection service does not hold user funds hostage. If it's misbehaving a backup key can be used to change it.
+User may be contacted by phone for confirmation. It's similar to what banks usually do. But in this case protection service does not hold user funds hostage. If it's misbehaving a backup key can be used to change it.
 
 ## Technicalities
 
@@ -129,7 +129,7 @@ OK     - KEY2_MSG1      MSG1   2                    3493    8949
 ...
 ```
 
-This report only includes successful executions and unexpected errors, otherwise there will be to many rows in it. If you attempt to make changes to contract, and your difftool can show inline changes (meld can). Then you may create new report and compare it to previously commited:
+This report only includes messages which were accepted by contract. If you attempt to make changes to contract, and your difftool can show inline changes (meld can), then you may create new report and compare it to previously commited:
 
 ```sh
 $ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
