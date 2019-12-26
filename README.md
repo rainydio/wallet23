@@ -132,7 +132,7 @@ OK     - KEY2_MSG1      MSG1   2                    3493    8949
 This report only includes successful executions and unexpected errors, otherwise there will be to many rows in it. If you attempt to make changes to contract, and your difftool can show inline changes (meld can). Then you may create new report and compare it to previously commited:
 
 ```sh
-$ fift -s test.fif 0 4 > test-report.txt; fift -s test.fif 4 4 >> test-report.txt; fift -s test.fif 8 4 >> test-report.txt; git difftool test-report.txt
+$ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
 ```
 
 This way it's super easy to spot any errors and to track gas usage.

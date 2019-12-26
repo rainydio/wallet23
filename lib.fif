@@ -93,12 +93,12 @@
 {
 	{
 		x{F800} @addop
-		c7 PUSH 0 INT 25 INT SETINDEXVARQ c7 POP
+		c7 PUSH TRUE 25 INT SETINDEXVARQ c7 POP
 	} : ACCEPT
 
 	{
 		x{F801} @addop
-		c7 PUSH 0 INT 25 INT SETINDEXVARQ c7 POP
+		c7 PUSH TRUE 25 INT SETINDEXVARQ c7 POP
 	} : SETGASLIMIT
 
 
@@ -108,7 +108,7 @@
 	rot                                                                            // root, msgext_slice, c7, code_filename
 
 	<{
-		c7 PUSH 10000 INT 25 INT SETINDEXVARQ c7 POP
+		c7 PUSH FALSE 25 INT SETINDEXVARQ c7 POP
 		<{
 			rot include CALLREF
 			0 INT
@@ -124,8 +124,8 @@
 	gasrunvmctx                                                                    // err, c5, c7', 0, root', gas_consumed
 
 	rot drop                                                                       // err, c5, c7, root, gas_consumed
-	rot 25 [] 0 = swap                                                             // err, c5, root, accepted, gas_consumed
-	over { 578 } { 430 } cond - swap                                               // err, c5, root, gas_consumed', accepted
+	rot 25 [] swap                                                                 // err, c5, root, accepted, gas_consumed
+	over { 562 } { 422 } cond - swap                                               // err, c5, root, gas_consumed', accepted
 	4 2 exch2                                                                      // root, c5, err, gas_consumed, accepted
 
 	{ x{F800} @addop } : ACCEPT

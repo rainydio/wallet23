@@ -17,24 +17,36 @@ test-address 1 Gram* "" msgint-transfer constant msg1
 test-address 2 Gram* "" msgint-transfer constant msg2
 test-address 3 Gram* "" msgint-transfer constant msg3
 
-
 |
 	"KEY1_MSG1" 1 now 30 + msg1 test-address key1priv msgext pair ,
 	"KEY1_MSG2" 1 now 30 + msg2 test-address key1priv msgext pair ,
 	"KEY1_MSG3" 1 now 30 + msg3 test-address key1priv msgext pair ,
 	"KEY1_CNCL" 1 now 30 + cncl test-address key1priv msgext pair ,
+constant test-messages-key1
 
+|
 	"KEY2_MSG1" 1 now 30 + msg1 test-address key2priv msgext pair ,
 	"KEY2_MSG2" 1 now 30 + msg2 test-address key2priv msgext pair ,
 	"KEY2_MSG3" 1 now 30 + msg3 test-address key2priv msgext pair ,
 	"KEY2_CNCL" 1 now 30 + cncl test-address key2priv msgext pair ,
+constant test-messages-key2
 
+|
 	"KEY3_MSG1" 1 now 30 + msg1 test-address key3priv msgext pair ,
 	"KEY3_MSG2" 1 now 30 + msg2 test-address key3priv msgext pair ,
 	"KEY3_MSG3" 1 now 30 + msg3 test-address key3priv msgext pair ,
 	"KEY3_CNCL" 1 now 30 + cncl test-address key3priv msgext pair ,
+constant test-messages-key3
 
+	test-messages-key1 explode drop
+	test-messages-key2 explode drop
+	test-messages-key3 explode drop
+	test-messages-key1 count
+	test-messages-key2 count +
+	test-messages-key3 count +
+	tuple
 constant test-messages
+
 
 { over $len - "" swap { " " $+ } swap 0 max times swap $+ } : pad-left
 { over $len - "" swap { " " $+ } swap 0 max times $+ } : pad-right
@@ -108,11 +120,9 @@ constant test-messages
 ."ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL" cr
 ."================================================================" cr
 
-| $1 parse-int {
-	test-messages over [] rot swap , swap 1 +
-} $2 parse-int times drop
-
-0 root 0 test-iter
+$1 "key1" $= { test-messages-key1 0 root 0 test-iter } if
+$1 "key2" $= { test-messages-key2 0 root 0 test-iter } if
+$1 "key3" $= { test-messages-key3 0 root 0 test-iter } if
 
 ."================================================================" cr
 
