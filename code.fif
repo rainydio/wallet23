@@ -93,7 +93,7 @@
 				// stack reordering for third key is rare and code size is prioritized
 				// in order to fit external message handler into two cells
 
-				// first attempting to swap with key that has no pending order
+				// first attempting to swap with key that has no pending message
 				// flip empty pending message slot (if any) and its key to the top
 				s4 PUSH ISNULL <{ 5 0 REVERSE }> PUSHCONT IF
 				// if there is an empty slot at the top, swap with its key
