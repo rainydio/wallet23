@@ -25,7 +25,7 @@ Naturally there are two most used transition paths:
 1.  key1 sends _cancelation_ confirmation
 1.  nothing is sent, seqno incremented
 
-Cancelation request is represented by empty message.
+Cancelation request is represented by cell without any data in it. Its first optional reference may contain cancelation reason encoded the same way as simple transfer body.
 
 ## Potential uses
 

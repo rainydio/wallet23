@@ -1,7 +1,5 @@
 "Asm.fif" include
 
-0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7 constant EMPTY_CELL_HASH
-
 0x00000001 constant OP_CHANGE_KEY
 
 85143  constant FN_SEQNO
@@ -117,21 +115,15 @@
 				// compare it to one received in external message
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRET
 
-				// next line severly affects performance pushing the size of external
-				// message handler over two cells and should be removed in future
-				//
 				// succefull confirmation (they match)
-				// jump to alternative return if it is empty cell (cancelation)
-				s6 PUSH HASHCU EMPTY_CELL_HASH INT EQUAL IFRETALT
+				// if message cell has no data (cancelation confirmation)
+				// then jump to alternative return
+				s6 PUSH CTOS SDEMPTY IFRETALT
 
-				// sending message, and also when previous line removed
-				// sending erroneous empty cell (cancelation)
-				// sending empty cell instead of valid message raises the error
-				// during action phase preventing contract data from being saved
-				// once flag 2 ignores that error previous line can be removed
+				// sending message
 				s6 PUSH 3 INT SENDRAWMSG
 
-				// clear pending orders and advance seqno (alternative return)
+				// clear pending messages and advance seqno (alternative return)
 				RETALT
 			}> PUSHCONT IFNOT
 
