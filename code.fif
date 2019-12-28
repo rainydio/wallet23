@@ -145,8 +145,8 @@
 		}>c CALLREF // slightly cheaper than executing continuation
 
 		// both exits from previous continuation push seqno on top of the stack
-		// current key (on top) is stored near seqno and will be at the bottom
-		// during next execution
+		// current key and pending message (on top) are stored near seqno
+		// and will be at the bottom during next execution
 		NEWC 32 STU STDICT 256 STU 256 STU 256 STU STDICT ENDC
 		POPROOT
 		ACCEPT
