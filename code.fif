@@ -21,63 +21,132 @@
 40 constant ERR_OP_UNKNOWN
 
 <{
+	// codepage setting that costs 26 gas or more than 1%
 	SETCP0
 
+	// external message handler function id is -1
+	// incrementing function id and using ifnot is cheaper
+	// than otherwise equivalent comparison to -1
 	DUP INC <{
+		// pick external message slice
+		// cut signature out of it
+		// make copy of remainder (gonna need that later)
+		// concatenate contract address with remainder
+		// and compute hash that was signed
 		OVER
-		512 INT LDSLICEX TUCK
-		MYADDR
+		512 INT LDSLICEX
+		DUP MYADDR
 		NEWC STSLICE STSLICE ENDC
 		HASHCU
-		ROT 32 LDU 32 LDU PLDREF
 
+		// take that remainder and load
+		// seqno, valid until, and message cell to be sent
+		SWAP 32 LDU 32 LDU PLDREF
+
+		// unpack contract data cell
+		// although first reference (if any) is last pending message
+		// and second reference (if any) is previous pending message
+		// load dictionary is cheaper than handling missing references
+		// with main disadvantage being keys not aligned to bytes
 		PUSHROOT
 		CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
 
-		// s10 extmsg_signature
-		// s9  extmsg_signed_hash
-		// s8  extmsg_seqno
-		// s7  extmsg_valid_until
-		// s6  extmsg_msg
-		// s5  seqno
+		// top 5 stack items (s0...s4) are intentionally symmetrical
+		//
+		// s10 signature
+		// s9  signed_hash
+		// s8  seqno
+		// s7  valid_until
+		// s6  msg
+		// s5  stored_seqno
 		// s4  last_msg
 		// s3  last_key
 		// s2  third_key
 		// s1  prev_key
 		// s0  prev_msg
 
+		// check valid until and compare seqnos
 		s5 s8 s7 PUSH3
 		NOW GEQ ERR_EXP THROWIFNOT
 		EQUAL ERR_SEQNO THROWIFNOT
 
 		<{
+			// there are two return paths
+			// normal (down at the very bottom) and alternative (next continuation)
+			// notably alternative return is executed from nested continuations
 			<{
+				// alternative return path clears pending messages
+				// and pushes incremented seqno on top of the stack
 				DROP NULL 4 3 BLKPUSH s9 PUSH INC
 			}> PUSHCONT SETEXITALT
 
+			// checking signature against most likely used key (on top)
 			s9 s10 s1 PUSH3 CHKSIGNU <{
+				// if it failed then reversing top 5 items puts second most likely key
+				// and its previously stored pending message (if any) on top
 				5 0 REVERSE
 				s9 s10 s1 PUSH3 CHKSIGNU IFRET
+
+				// if that failed too, then it's either a third key or signature error
 				s9 s10 s2 PUSH3 CHKSIGNU ERR_SIG THROWIFNOT
+
+				// stack reordering for third key is rare and code size is prioritized
+				// in order to fit external message handler into two cells
+
+				// first attempting to swap with key that has no pending order
+				// flip empty pending message slot (if any) and its key to the top
 				s4 PUSH ISNULL <{ 5 0 REVERSE }> PUSHCONT IF
+				// if there is an empty slot at the top, swap with its key
 				s0 PUSH ISNULL <{ 2 1 REVERSE }> PUSHCONT IFJMP
+
+				// when there are no empty slots
+				// then attempting to swap with key that will *not* be confirmed
+				// flip the key and message that will be confirmed to the bottom
 				s0 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 5 0 REVERSE }> PUSHCONT IF
+				// if message that will be confirmed is at the bottom
+				// swap with key at the top
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 2 1 REVERSE }> PUSHCONT IFJMP
+
+				// if none of the messages will be confirmed then do not send anything
+				// just clear pending orders and advance seqno (alternative return)
 				RETALT
 			}> PUSHCONT IFNOT
 
+			// if there is pending message submitted by another key (at the bottom)
 			s4 PUSH ISNULL <{
+				// compare it to one received in external message
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRET
+
+				// next line severly affects performance pushing the size of external
+				// message handler over two cells and should be removed in future
+				//
+				// succefull confirmation (they match)
+				// jump to alternative return if it is empty cell (cancelation)
 				s6 PUSH HASHCU EMPTY_CELL_HASH INT EQUAL IFRETALT
+
+				// sending message, and also when previous line removed
+				// sending erroneous empty cell (cancelation)
+				// sending empty cell instead of valid message raises the error
+				// during action phase preventing contract data from being saved
+				// once flag 2 ignores that error previous line can be removed
 				s6 PUSH 3 INT SENDRAWMSG
+
+				// clear pending orders and advance seqno (alternative return)
 				RETALT
 			}> PUSHCONT IFNOT
 
+			// normal return path storing message and waiting for confirmation
+			// check if key did not stored message already
 			s0 PUSH ISNULL ERR_REPLAY THROWIFNOT
+			// swap received message with empty slot (null)
 			s6 XCHG0
+			// and push seqno on top without incrementing
 			s5 PUSH
-		}>c CALLREF
+		}>c CALLREF // slightly cheaper than executing continuation
 
+		// both exits from previous continuation push seqno on top of the stack
+		// current key (on top) is stored near seqno and will be at the bottom
+		// during next execution
 		NEWC 32 STU STDICT 256 STU 256 STU 256 STU STDICT ENDC
 		POPROOT
 		ACCEPT
