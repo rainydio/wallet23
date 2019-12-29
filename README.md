@@ -30,19 +30,19 @@ Locking is necessary to prevent draining wallet funds by attacker who acquired a
 
 ### Request / confirmation
 
-The most used and optimized transition path involves sending two external messages signed by two different keys. First creating request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until new cycle begins allows both external messages to be sent simultaneously.
+The most used and optimized transition path involves sending two external messages signed by two different keys. First creating outbound message request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until new cycle begins allows both external messages to be sent simultaneously.
 
 ### Request / cancellation / cancellation confirmation
 
-In order to reject request confirmation key has to submit cancellation request and it also requires confirmation. Although neither of two keys can create requests anymore, sending confirmation is still allowed. To start new cycle main key needs to confirm cancellation request.
+In order to reject request confirmation key has to submit cancellation request that also requires confirmation. Although neither of two keys can create requests anymore, sending confirmation is still allowed. To start new cycle main key needs to confirm cancellation request.
 
 ### Other transitions
 
-Normal request to send message out is represented by valid message cell, while cancellation request is represented by cell containing no data and optional reference to cell with explanation. It is possible to submit either kind of request at any moment. Only once two keys submit identical cell its data is inspected and if it isn't empty outgoing message is sent.
+Outbound message request is represented by valid message cell, while cancellation request is represented by cell containing no data and optional reference with explanation. It is possible to submit either kind of request at any moment. Only once two keys submit identical cell its data is inspected and if it isn't empty outbound message is sent.
 
-It is completely possible to start signature collection with cancellation request. This may happen if it was sent immediately after request it is supposed to cancel, but was included in block earlier.
+It is completely possible to start signature collection with cancellation request arriving first. This may happen if it was sent immediately after request it is supposed to cancel, but got included in block earlier.
 
-It is possible to submit two different requests to send message out. This may happen under extreme conditions when attacker controls one of the keys. Rightful owner should be able to create alternative request that cannot be blocked.
+It is possible to submit two different outbound message requests. Generally confirmation key should not submit outbound message request that was not previously signed by main key. But contract doesn't treat keys differently and alternative outbound message request is required when attacker controls one of the keys.
 
 ### Changing the keys
 
@@ -73,7 +73,7 @@ There is no reason to allow user to set message flags. So the first two flags th
 - _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay those fees.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
 
-Other two flags aren't used:
+Other two flags are not used:
 
 - _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
 - _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
