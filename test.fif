@@ -4,7 +4,6 @@
 "lib.fif" include
 
 
-newkeypair constant key0pub constant key0priv
 newkeypair constant key1pub constant key1priv
 newkeypair constant key2pub constant key2priv
 newkeypair constant key3pub constant key3priv
@@ -64,6 +63,14 @@ constant test-messages
 	nip
 } : test-iter-msg$
 
+{
+	""
+	over key1pub B= { "KEY1" $+ } if
+	over key2pub B= { "KEY2" $+ } if
+	over key3pub B= { "KEY3" $+ } if
+	4 pad-left
+	nip
+} : test-iter-key$
 
 {                                                                                // msgs, pad, root, gas_total
 	0 {                                                                            // msgs, pad, root, gas_total, i
@@ -103,6 +110,11 @@ constant test-messages
 			0 pick 7 pick + (.)
 			5 pad-left type
 
+			."   "
+			3 pick root-last-key  test-iter-key$ type ." "
+			3 pick root-prev-key  test-iter-key$ type ." "
+			3 pick root-third-key test-iter-key$ type
+
 			cr
 
 			test-messages
@@ -117,13 +129,13 @@ constant test-messages
 } : test-iter
 
 
-."ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL" cr
-."================================================================" cr
+."ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD" cr
+."=================================================================================" cr
 
 $1 "key1" $= { test-messages-key1 0 root 0 test-iter } if
 $1 "key2" $= { test-messages-key2 0 root 0 test-iter } if
 $1 "key3" $= { test-messages-key3 0 root 0 test-iter } if
 
-."================================================================" cr
+."=================================================================================" cr
 
 // */

@@ -84,7 +84,7 @@ Other two flags aren't used:
 
 ## Contract data
 
-Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead (equivalent to `dict,`).
+Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead of equivalent `dict,`.
 
 ```
 seqno 32 u,
@@ -100,13 +100,13 @@ Notably two keys along with requests are not stored at fixed positions, instead 
 Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule. There is automated test suite that runs through all possible combinations of external messages three keys may send. The report contains state description, gas used, and outbound message that was sent.
 
 ```
-ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
-================================================================
-OK   KEY1_MSG1                 1   MSG1             2566    2566
-OK   - KEY2_MSG1        MSG1   2                    3466    6032
-OK   - KEY2_MSG2               1   MSG1 MSG2        2690    5256
-OK     - KEY1_MSG2      MSG2   2                    3466    8722
-OK     - KEY2_MSG1      MSG1   2                    3570    8826
+ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD
+=================================================================================
+OK   KEY1_MSG1                 1   MSG1             2566    2566   KEY1 KEY2 KEY3
+OK   - KEY2_MSG1        MSG1   2                    3466    6032   KEY2 KEY1 KEY3
+OK   - KEY2_MSG2               1   MSG1 MSG2        2690    5256   KEY2 KEY1 KEY3
+OK     - KEY1_MSG2      MSG2   2                    3466    8722   KEY1 KEY2 KEY3
+OK     - KEY2_MSG1      MSG1   2                    3570    8826   KEY2 KEY1 KEY3
 ...
 ```
 
