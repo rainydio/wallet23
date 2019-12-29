@@ -6,14 +6,14 @@ Personal 2/3 multisig wallet contract with signature collection performed on-cha
 
 Essential parts are done. Small updates are needed once I figure out consistent naming.
 
-- Store layout is fixed
-- External message format is fixed
-- Internal message format is unlikely to change
+- Store layout will not change
+- External message format will not change
+- Internal message format will not change
 - External message handler is unlikely to change
 - Internal message handler will receive minor updates
 - Get methods will be replaced
 
-There are also fift primitives that are likely to be replaced. Test runner will receive improvements and couple of manual tests will be added.
+There are also fift primitives that are likely to be replaced. Test runner will receive improvements and couple of hand-written tests will be added.
 
 ### Three parties
 
