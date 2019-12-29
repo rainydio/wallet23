@@ -84,7 +84,7 @@ External message contains valid_until field that restricts time when it can be a
 
 ### External message structure
 
-Given `out_msg` that is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
+Given that `out_msg` is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
 
 ```
 signature B, seqno 32 u, valid_until 32 u, out_msg ref,
@@ -109,7 +109,18 @@ Everything together creating external message cell:
 b>
 ```
 
-Cancellation request is represented by empty cell with optional cell reference that contains explanation using same format as simple transfer body.
+Simpliest cancellation is represented by empty cell, so external message carrying cancellation:
+
+```
+<b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
+
+  <b b{100} s, contract_address addr,
+    seqno 32 u, valid_until 32 u, <b b> ref,
+  b> hashu privkey ed25519_sign_uint B,
+
+  seqno 32 u, valid_until 32 u, <b b> ref,
+b>
+```
 
 ## Tests
 
