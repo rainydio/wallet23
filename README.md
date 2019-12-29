@@ -68,9 +68,9 @@ Instead hash that is signed is required to include contract address. This is to 
 
 ### Send raw message mode is set to 3
 
-There is no reason to allow user to set message flags. So the first two flags that are absolutely necessary are used:
+There is no reason to allow user to set mode. So the first two flags that are absolutely necessary are used:
 
-- _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay those fees.
+- _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay them.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
 
 Other two flags are not used:
@@ -80,20 +80,33 @@ Other two flags are not used:
 
 ### Valid until for external message
 
-External message valid_until parameter restricts time when inbound external message can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
+External message contains valid_until field that restricts time when it can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
 
 ### External message structure
 
-Message structure is similar to the simpliest wallet but lacks mode parameter.
+Given `out_msg` that is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
 
 ```
 signature B, seqno 32 u, valid_until 32 u, out_msg ref,
 ```
 
-But hash that is signed additionally includes contract address
+Importantly hash that is signed includes contract address:
 
 ```
 b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, out_msg ref,
+```
+
+Everything together creating external message cell:
+
+```
+<b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
+
+	<b b{100} s, contract_address addr,
+		seqno 32 u, valid_until 32 u, out_msg ref,
+	b> hashu privkey ed25519_sign_uint B,
+
+	seqno 32 u, valid_until 32 u, out_msg ref,
+b>
 ```
 
 Cancellation request is represented by empty cell with optional cell reference that contains explanation using same format as simple transfer body.
