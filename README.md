@@ -10,7 +10,7 @@ It is intended to be operated by three parties providing service to single user.
 - Confirmation key stored on server by independent protection service.
 - Backup key stored somewhere safe in sealed bag by user.
 
-Advanced users are likely to keep confirmation key to themself. But judging by how often MFA is used by ordinary people most confirmations are likely to be performed server side. Similarly to traditional banks such protection service operating confirmation key may choose to:
+Advanced users are likely to keep confirmation key to themself. But judging by how often MFA is used by ordinary people most confirmations are likely to be performed server side. Similarly to traditional banks protection service operating confirmation key may choose to:
 
 - Cancel transactions sent to known phishing addresses.
 - Cancel transactions sent to vulnerable contracts.
@@ -46,21 +46,27 @@ It is possible to submit two different outbound message requests. Generally conf
 
 ### Changing the keys
 
-Contract handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request to send message to contract itself needs to pass confirmation checks.
+Contract handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request containing outbound message to contract itself needs to pass confirmation checks.
 
 ## Technicalities
 
-Contract is small and written in ASM. Each TVM instruction in external message handler was chosen to reduce gas usage.
+Contract is written in ASM and attempts to be as efficient as possible.
 
-### Wallet constructor
+### Constructor envelope
 
-Unlike _standard_ wallet it doesn't use subwallet_id variable stored in state. Instead there is additional nonce parameter during creation that is used to randomize wallet address. It can be tweaked to choose preferred address (containing only alphanumeric characters) and also allows to use two wallets with same set of keys. It is added to stateinit constructor code which is separate ASM contract that is replaced by actual contract body right after:
+Contract code does not contain special initialization checks (if seqno is zero). To build stateinit contract code should be wrapped into constructor envelope that immediately replaces itself with actual contract code.
 
 ```
-<{ SETCP0 ACCEPT nonce INT "code.fif" include PUSHREF SETCODE }>c
+0 constant nonce
+
+<{
+  SETCP0 ACCEPT
+  nonce INT
+  "code.fif" include PUSHREF SETCODE
+}>c
 ```
 
-This way contract code doesn't need to include any special checks for first message (if seqno is zero). Also nonce is dropped, it isn't used by contract itself, and is not required to be included into external message.
+Additional nonce constant can be tweaked to choose preferred address (containing only alphanumeric characters). Similarly to subwallet_id used by standard wallet, nonce also allows to operate two wallets with same set of keys. But nonce isn't included into external message.
 
 ### Signing contract address
 
@@ -72,19 +78,16 @@ External message contains valid_until field that restricts time when it can be a
 
 ### Mode
 
-There is no reason to allow user to set mode. So the first two flags that are absolutely necessary are used:
+There is no reason to have custom outbound message mode, first two necessary flags are used:
 
 - _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay them.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
-
-Other two flags aren't used:
-
 - _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
 - _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
 
 ## Contract data
 
-Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead of equivalent `dict,`.
+Request that is waiting for confirmation is stored as reference in contract data cell. If there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored. Not to be confused with dictionaries non-standard serialization primitive `nullref,` is used (instead of equivalent `dict,`).
 
 ```
 seqno 32 u,
@@ -95,9 +98,9 @@ prev_key 256 u,
 prev_request nullref,
 ```
 
-Notably two keys along with requests are not stored at fixed positions, instead position within data cell depends on usage pattern. The key that is most likely to send external message is at the end. And reversing last 5 items switches perspective to the next most likely key.
+Notably keys along with requests are not stored at fixed positions, instead position within contract data cell depends on usage pattern. Key at the end is most likely to send external message and its signature is checked first. If that failed then inexpensive operation reversing 5 items switches perspective to second most likely key.
 
-Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule. There is automated test suite that runs through all possible combinations of external messages three keys may send. The report contains state description, gas used, and outbound message that was sent.
+Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule. Automated test suite runs through all possible combinations of external messages three keys may send. Report contains state description, gas used, and outbound message that was sent.
 
 ```
 ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD
