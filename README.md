@@ -41,11 +41,11 @@ Unconventionally contract's seqno is not incremented after every external messag
 
 Locking is necessary to prevent draining wallet funds by attacker who acquired access to only one key.
 
-### Request / request confirmation
+### Request / confirmation
 
 The most used and optimized transition path involves sending two external messages signed by two different keys. First creating request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until new cycle begins allows both external messages to be sent simultaneously.
 
-### Request / cancellation request / cancellation request confirmation
+### Request / cancellation / cancellation confirmation
 
 In order to reject request confirmation key has to submit cancellation request and it also requires confirmation. Although neither of two keys can create requests anymore, sending confirmation is still allowed. To start new cycle main key needs to confirm cancellation request.
 
