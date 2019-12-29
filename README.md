@@ -66,23 +66,57 @@ This way contract code doesn't need to include any special checks for first mess
 
 Instead hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different workchain) that is using same public key and similar payload structure.
 
-### Send raw message mode is set to 3
+### Valid until
+
+External message contains valid_until field that restricts time when it can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
+
+### Mode
 
 There is no reason to allow user to set mode. So the first two flags that are absolutely necessary are used:
 
 - _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay them.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
 
-Other two flags are not used:
+Other two flags aren't used:
 
 - _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
 - _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
 
-### Valid until for external message
+## Contract data
 
-External message contains valid_until field that restricts time when it can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
+Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. For performance reasons contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead (equivalent to `dict,`).
 
-### External message structure
+```
+seqno 32 u,
+last_request nullref,
+last_key 256 u,
+third_key 256 u,
+prev_key 256 u,
+prev_request nullref,
+```
+
+Notably two keys along with requests are not stored at fixed positions, instead position within data cell depends on usage pattern. It is stored that way to increase performance. The key that is most likely to send external message is at the end. And reversing last 5 items switches perspective to the next most likely key.
+
+Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule, but the performance gains of assuming which key will be used next are significant. There is automated test suite that runs through all possible combinations of external messages three keys may send. The report contains state description, gas used, and outbound message that was sent.
+
+```
+ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
+================================================================
+OK   KEY1_MSG1                 1   MSG1             2566    2566
+OK   - KEY2_MSG1        MSG1   2                    3466    6032
+OK   - KEY2_MSG2               1   MSG1 MSG2        2690    5256
+OK     - KEY1_MSG2      MSG2   2                    3466    8722
+OK     - KEY2_MSG1      MSG1   2                    3570    8826
+...
+```
+
+To generate report and compare it to previously committed:
+
+```sh
+$ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
+```
+
+## External message format
 
 Given that `out_msg` is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
 
@@ -109,7 +143,7 @@ Everything together creating external message cell:
 b>
 ```
 
-Simpliest cancellation is represented by empty cell, so external message carrying cancellation:
+Cancellation is represented by cell containing no data, so external message carrying simpliest cancellation:
 
 ```
 <b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
@@ -122,23 +156,4 @@ Simpliest cancellation is represented by empty cell, so external message carryin
 b>
 ```
 
-## Tests
-
-Contract is optimized for two keys interacting in turns. When third key is involved it attempts to _take place_ of some other key. It is intrinsically dangerous to have such special rules, but the performance gains of assuming which key will be used next are significant. There is an automated test suite which runs through all possible combinations that those keys may send external messages in. The report contains state description, gas used, and also intercepts whatever was sent through send_raw_message:
-
-```
-ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
-================================================================
-OK   KEY1_MSG1                 1   MSG1             2666    2666
-OK   - KEY2_MSG1        MSG1   2                    3389    6055
-OK   - KEY2_MSG2               1   MSG1 MSG2        2790    5456
-OK     - KEY1_MSG2      MSG2   2                    3389    8845
-OK     - KEY2_MSG1      MSG1   2                    3493    8949
-...
-```
-
-This report only includes messages that were accepted by contract. If you attempt to make changes to contract and your difftool can show inline changes (meld can), then you may create new report and compare it to commited:
-
-```sh
-$ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
-```
+Additionally cancellation cell may include optional reference with explanation encoded using simple transfer format.

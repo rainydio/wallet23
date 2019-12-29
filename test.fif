@@ -9,7 +9,7 @@ newkeypair constant key1pub constant key1priv
 newkeypair constant key2pub constant key2priv
 newkeypair constant key3pub constant key3priv
 
-	<b 1 32 u, b{0} s, key2pub B, key3pub B, key1pub B, b{0} s, b>
+	<b 1 32 u, null nullref, key2pub B, key3pub B, key1pub B, null nullref, b>
 constant root
 
 <b b> constant cncl
