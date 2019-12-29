@@ -55,11 +55,11 @@ Normal request to send message out is represented by valid message cell, while c
 
 It is completely possible to start signature collection with cancellation request. This may happen if it was sent immediately after request it is supposed to cancel, but was included in block earlier.
 
-It is possible to submit two different requests to send message out. This may happen under extreme conditions when attacker controls of one of the keys. Rightful owner should be able to create alternative request that cannot be blocked by attacker.
+It is possible to submit two different requests to send message out. This may happen under extreme conditions when attacker controls one of the keys. Rightful owner should be able to create alternative request that cannot be blocked.
 
 ### Changing the keys
 
-Contract's handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request to send message to contract itself needs to pass confirmation checks.
+Contract handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request to send message to contract itself needs to pass confirmation checks.
 
 ## Technicalities
 
@@ -73,7 +73,7 @@ Unlike _standard_ wallet it doesn't use subwallet_id variable stored in state. I
 <{ SETCP0 ACCEPT nonce INT "code.fif" include PUSHREF SETCODE }>c
 ```
 
-This way contract doesn't contain any special checks for first message (if seqno is zero). Also nonce is dropped, it isn't used by contract itself, and is not required to be included into external message.
+This way contract code doesn't need to include any special checks for first message (if seqno is zero). Also nonce is dropped, it isn't used by contract itself, and is not required to be included into external message.
 
 ### Signing contract address
 
@@ -90,7 +90,7 @@ There is no reason to allow user to set message flags. So the first two flags th
 
 ### Valid until for external message
 
-External message's valid_until parameter restricts time when inbound external message can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
+External message valid_until parameter restricts time when inbound external message can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
 
 ### External message structure
 
@@ -100,7 +100,7 @@ Message structure is similar to the simpliest wallet but lacks mode parameter.
 signature B, seqno 32 u, valid_until 32 u, msg_out ref,
 ```
 
-While hash that is signed includes contract address
+But hash that is signed additionally includes contract address
 
 ```
 b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, msg_out ref,
@@ -123,7 +123,7 @@ OK     - KEY2_MSG1      MSG1   2                    3493    8949
 ...
 ```
 
-This report only includes messages that were accepted by contract. If you attempt to make changes to contract and your difftool can show inline changes (meld can), then you may create new report and compare it to previously commited:
+This report only includes messages that were accepted by contract. If you attempt to make changes to contract and your difftool can show inline changes (meld can), then you may create new report and compare it to commited:
 
 ```sh
 $ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
