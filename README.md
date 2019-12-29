@@ -101,11 +101,11 @@ Everything together creating external message cell:
 ```
 <b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
 
-	<b b{100} s, contract_address addr,
-		seqno 32 u, valid_until 32 u, out_msg ref,
-	b> hashu privkey ed25519_sign_uint B,
+  <b b{100} s, contract_address addr,
+    seqno 32 u, valid_until 32 u, out_msg ref,
+  b> hashu privkey ed25519_sign_uint B,
 
-	seqno 32 u, valid_until 32 u, out_msg ref,
+  seqno 32 u, valid_until 32 u, out_msg ref,
 b>
 ```
 
