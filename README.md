@@ -2,19 +2,6 @@
 
 Personal 2/3 multisig wallet contract with signature collection performed on-chain. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost and is controlled by attacker.
 
-### Status
-
-Essential parts are done. Small updates are needed once I figure out consistent naming.
-
-- Store layout will not change
-- External message format will not change
-- Internal message format will not change
-- External message handler is unlikely to change
-- Internal message handler will receive minor updates
-- Get methods will be replaced
-
-There are also fift primitives that are likely to be replaced. Test runner will receive improvements and couple of hand-written tests will be added.
-
 ### Three parties
 
 It is intended to be operated by three parties providing service to single user.
@@ -85,6 +72,9 @@ There is no reason to allow user to set message flags. So the first two flags th
 
 - _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay those fees.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
+
+Other two flags aren't used:
+
 - _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
 - _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
 
@@ -97,13 +87,13 @@ External message valid_until parameter restricts time when inbound external mess
 Message structure is similar to the simpliest wallet but lacks mode parameter.
 
 ```
-signature B, seqno 32 u, valid_until 32 u, msg_out ref,
+signature B, seqno 32 u, valid_until 32 u, out_msg ref,
 ```
 
 But hash that is signed additionally includes contract address
 
 ```
-b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, msg_out ref,
+b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, out_msg ref,
 ```
 
 Cancellation request is represented by empty cell with optional cell reference that contains explanation using same format as simple transfer body.
