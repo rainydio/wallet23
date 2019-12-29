@@ -19,7 +19,7 @@
 40 constant ERR_OP_UNKNOWN
 
 <{
-	// codepage setting that costs 26 gas or more than 1%
+	// codepage setting costs 26 gas or more than 1%
 	SETCP0
 
 	// external message handler function id is -1
@@ -30,7 +30,7 @@
 		// cut signature out of it
 		// make copy of remainder (gonna need that later)
 		// concatenate contract address with remainder
-		// and compute hash that was signed
+		// compute hash that was signed
 		OVER
 		512 INT LDSLICEX
 		DUP MYADDR
@@ -44,12 +44,12 @@
 		// unpack contract data cell
 		// although first reference (if any) is last pending message
 		// and second reference (if any) is previous pending message
-		// load dictionary is cheaper than handling missing references
+		// load dictionary operation is cheaper than handling missing references
 		// with main disadvantage being keys not aligned to bytes
 		PUSHROOT
 		CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
 
-		// top 5 stack items (s0...s4) are intentionally symmetrical
+		// note that top 5 stack items (s0...s4) loaded from data are symmetrical
 		//
 		// s10 signature
 		// s9  signed_hash
@@ -74,8 +74,9 @@
 			// notably alternative return is executed from nested continuations
 			<{
 				// alternative return path clears pending messages
+				DROP NULL 4 3 BLKPUSH
 				// and pushes incremented seqno on top of the stack
-				DROP NULL 4 3 BLKPUSH s9 PUSH INC
+				s9 PUSH INC
 			}> PUSHCONT SETEXITALT
 
 			// checking signature against most likely used key (on top)
@@ -106,7 +107,7 @@
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 2 1 REVERSE }> PUSHCONT IFJMP
 
 				// if none of the messages will be confirmed then do not send anything
-				// just clear pending orders and advance seqno (alternative return)
+				// just clear pending messages and advance seqno (alternative return)
 				RETALT
 			}> PUSHCONT IFNOT
 
@@ -128,7 +129,7 @@
 			}> PUSHCONT IFNOT
 
 			// normal return path storing message and waiting for confirmation
-			// check if key did not stored message already
+			// check if key can store pending message
 			s0 PUSH ISNULL ERR_REPLAY THROWIFNOT
 			// swap received message with empty slot (null)
 			s6 XCHG0

@@ -1,122 +1,116 @@
 # 2/3 wallet
 
-Personal wallet contract that requires two signatures to send message out. Signature collection is performed on-chain in multi-step request/confirmation process. Although all three keys have equal permissions, contract is optimized for two keys performing requests and confirmations while third key is reserved for backup. It's made with assumption that one of the keys may be lost and is controlled by attacker.
+Personal 2/3 multisig wallet contract with signature collection performed on-chain. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost and is controlled by attacker.
 
-### State transitions
+### Status
 
-There are couple of simple rules that govern state transitions:
+Essential parts are done. Small updates are needed once I figure out consistent naming.
 
-- An individual key can only make a single order request. Aftewards it is only allowed to send confirmations. This is to prevent attacker who gained access to a single key from draining wallet funds.
-- Once two keys agree: message is sent, seqno incremented, and all three keys are unlocked.
-- If all three keys disagree: nothing is sent, seqno incremented, and all three keys are unlocked.
+- Store layout is fixed
+- External message format is fixed
+- Internal message format is unlikely to change
+- External message handler is unlikely to change
+- Internal message handler will receive minor updates
+- Get methods will be replaced
 
-Naturally there are two most used transition paths:
+There are also fift primitives that are likely to be replaced. Test runner will receive improvements and couple of manual tests will be added.
 
-#### Request / request confirmation
+### Three parties
 
-1.  key1 sends _message_ request
-1.  key2 sends _message_ confirmation
-1.  _messsage_ is sent, seqno incremented
+It is intended to be operated by three parties providing service to single user.
 
-#### Request / cancelation / cancelation confirmation
+- Main key stored on device by wallet software.
+- Confirmation key stored on server by independent protection service.
+- Backup key stored somewhere safe in sealed bag by user.
 
-1.  key1 sends _message_ request
-1.  key2 sends _cancelation_ request
-1.  key1 sends _cancelation_ confirmation
-1.  nothing is sent, seqno incremented
+Advanced users are likely to keep confirmation key to themself. But judging by how often MFA is used by ordinary people most confirmations are likely to be performed server side. Similarly to traditional banks such protection service operating confirmation key may choose to:
 
-Cancelation request is represented by cell without any data in it. Its first optional reference may contain cancelation reason encoded the same way as simple transfer body.
+- Cancel transactions sent to known phishing addresses.
+- Cancel transactions sent to vulnerable contracts.
+- Cancel suspiciously large transfers.
 
-## Potential uses
+It's highly desirable for confirmation key to be operated by independent party. Because signatures are collected on-chain, no additional integration with wallet software is needed.
 
-I can see three main scenarios from a single person controling all three keys and up to three different parties involved (users, wallet software, protection service).
+## State transitions
 
-### Single user controlling three keys
+Unconventionally contract's seqno is not incremented after every external message, instead it represents a single cycle of collecting signatures. There are three rules within it:
 
-A simplies case is to use one key at main device (desktop PC), a second key at confirmation device (mobile software), and to store a third key in sealed paper bag somewhere else. The fact that backup key on its own doesn't grant full access to wallet severly lowers its storage requirements. It can be given to family member, only to be used in case one of the devices is lost.
+1. An individual key can create only a single request waiting for confirmation from another key, afterwards it is locked and can only send confirmation.
+1. If two keys agree: confirmed request is executed, seqno incremented, keys are unlocked.
+1. If all three keys disagree: seqno incremented, keys are unlocked.
 
-### Mobile wallet software
+Locking is necessary to prevent draining wallet funds by attacker who acquired access to only one key.
 
-When primary device is mobile wallet then there is no easy option for confirmation device. In this case wallet developer may choose to generate confirmation key server-side. Most of the requests originating from primary key should be confirmed automatically. If backup key is used then user should be contacted, and all confirmations delayed for a week or so allowing user to react. This way wallet software can offer a safer version of a backup.
+### Request / request confirmation
 
-But when confirmation process is not controlled by user, then there is a potential to offer more useful service. Also I imagine that wallet software developer would like to ditch that confirmation key to a third party, to ensure that his own engineers cannot access user funds.
+The most used and optimized transition path involves sending two external messages signed by two different keys. First creating request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until new cycle begins allows both external messages to be sent simultaneously.
 
-### Third party protection service
+### Request / cancellation request / cancellation request confirmation
 
-Because signatures are collected on-chain, it's trivial for a third party to step into the process offering advanced protection services:
+In order to reject request confirmation key has to submit cancellation request and it also requires confirmation. Although neither of two keys can create requests anymore, sending confirmation is still allowed. To start new cycle main key needs to confirm cancellation request.
 
-- Blacklisting address used for phishing
-- Blocking suspiciously large transfers
-- Blocking messages that interact with vulnerable contracts
+### Other transitions
 
-User may be contacted by phone for confirmation. It's similar to what banks usually do. But in this case protection service does not hold user funds hostage. If it's misbehaving a backup key can be used to change it.
+Normal request to send message out is represented by valid message cell, while cancellation request is represented by cell containing no data and optional reference to cell with explanation. It is possible to submit either kind of request at any moment. Only once two keys submit identical cell its data is inspected and if it isn't empty outgoing message is sent.
+
+It is completely possible to start signature collection with cancellation request. This may happen if it was sent immediately after request it is supposed to cancel, but was included in block earlier.
+
+It is possible to submit two different requests to send message out. This may happen under extreme conditions when attacker controls of one of the keys. Rightful owner should be able to create alternative request that cannot be blocked by attacker.
+
+### Changing the keys
+
+Contract's handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request to send message to contract itself needs to pass confirmation checks.
 
 ## Technicalities
 
-The contract is quite small and is written in ASM. There are couple of example usage scripts `wallet-new.fif` and `wallet-query.fif`. The later has relatively rich interface and requires wallet state to be downloaded from chain. Instructions how to do that are printed by scripts.
-
-Also there is `wallet.sh` script ([example usage video]), create new empty directory to hold wallet files to play with it.
-
-```sh
-$ mkdir mywallet
-$ cd mywallet
-$ ../wallet.sh
-```
+Contract is small and written in ASM. Each TVM instruction in external message handler was chosen to reduce gas usage.
 
 ### Wallet constructor
 
-Unlike _standard_ wallet this contract doesn't use `subwallet_id` variable stored in state. Instead there is an additional `nonce` parameter durring creating that is used to randomize wallet address. It can be used to choose preferred address (containing only alphanumeric characters) or allows to use two wallets with the same set of keys. It is added to stateinit constructor code which is a separate ASM contract that is replaced by actual contract body right after:
+Unlike _standard_ wallet it doesn't use subwallet_id variable stored in state. Instead there is additional nonce parameter during creation that is used to randomize wallet address. It can be tweaked to choose preferred address (containing only alphanumeric characters) and also allows to use two wallets with same set of keys. It is added to stateinit constructor code which is separate ASM contract that is replaced by actual contract body right after:
 
 ```
 <{ SETCP0 ACCEPT nonce INT "code.fif" include PUSHREF SETCODE }>c
 ```
 
-This way contract doesn't need any special checks for first message (if seqno is zero). Also `nonce` is dropped and isn't used by contract itself. And is not required to be included into a message.
+This way contract doesn't contain any special checks for first message (if seqno is zero). Also nonce is dropped, it isn't used by contract itself, and is not required to be included into external message.
 
 ### Signing contract address
 
-Instead the hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different shard) that is using same public key and similar payload structure.
+Instead hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different workchain) that is using same public key and similar payload structure.
 
 ### Send raw message mode is set to 3
 
-There is no reason to allow user to set message flags. So the first two flags, that are absolutely required are used:
+There is no reason to allow user to set message flags. So the first two flags that are absolutely necessary are used:
 
-- _+1 Sender wants to pay transfer fees separately._
-  There is no-one else to pay those fees.
-- _+2 Any errors arising while processing this message during the action phase should be ignored._
-  Otherwise state will be reverted, and a faulty external message can be replayed.
-- _+64 Messages that carry all the remaining value of the inbound message._
-  There is no value attached to inbound external message.
-- _+128 Messages that are to carry all the remaining balance of the current smart contract._
-  Although has potential use (quite dangerous) supporting it costs more gas that it can save.
+- _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay those fees.
+- _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
+- _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
+- _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
 
-### Valid until for incoming message
+### Valid until for external message
 
-The `valid_until` message parameter restricts time when incoming external message will be accepted by contract. It has no effect on how long it might take to confirm message. There is no parameter controlling pending request expiration.
+External message's valid_until parameter restricts time when inbound external message can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
 
 ### External message structure
 
-Resulting message structure is similar to the simpliest wallet but lack mode parameter.
+Message structure is similar to the simpliest wallet but lacks mode parameter.
 
 ```
-signature B, seqno 32 u, valid_until 32 u, intmsg_out ref,
+signature B, seqno 32 u, valid_until 32 u, msg_out ref,
 ```
 
-And hash that is signed is build from cell that includes contract address
+While hash that is signed includes contract address
 
 ```
-b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, intmsg_out ref,
+b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, msg_out ref,
 ```
 
-A cancellation request is an empty message, or alternatively any invalid message when send_raw_message mode 2 is fixed.
-
-### Key rotation
-
-Contract contains internal message handler that handles a single operation to change keys. The internal message creating request must come from contract itself. To prevent potential lock-out only one key at a time can be changed.
+Cancellation request is represented by empty cell with optional cell reference that contains explanation using same format as simple transfer body.
 
 ## Tests
 
-Contract is optimized for two keys interacting in turns. When third key is involved it attempts to _take place_ of some other key. It is intrinsically dangerous to have such special rules, but the performance gains of assuming which key will be used next are significant. There is an automated test suite which runs through all possible combinations that those keys may send messages in. The resulting report contains state description, gas used, and also intercepts whatever was sent through send_raw_message:
+Contract is optimized for two keys interacting in turns. When third key is involved it attempts to _take place_ of some other key. It is intrinsically dangerous to have such special rules, but the performance gains of assuming which key will be used next are significant. There is an automated test suite which runs through all possible combinations that those keys may send external messages in. The report contains state description, gas used, and also intercepts whatever was sent through send_raw_message:
 
 ```
 ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
@@ -129,12 +123,8 @@ OK     - KEY2_MSG1      MSG1   2                    3493    8949
 ...
 ```
 
-This report only includes messages which were accepted by contract. If you attempt to make changes to contract, and your difftool can show inline changes (meld can), then you may create new report and compare it to previously commited:
+This report only includes messages that were accepted by contract. If you attempt to make changes to contract and your difftool can show inline changes (meld can), then you may create new report and compare it to previously commited:
 
 ```sh
 $ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
 ```
-
-This way it's super easy to spot any errors and to track gas usage.
-
-[example usage video]: https://youtu.be/1Si--TuRiTE
