@@ -92,26 +92,26 @@
 				// stack reordering for third key is rare and code size is prioritized
 				// in order to fit external message handler into two cells
 
-				// first attempting to swap with key that has no pending message
-				// flip empty pending message slot (if any) and its key to the top
-				s4 PUSH ISNULL <{ 5 0 REVERSE }> PUSHCONT IF
-				// if there is an empty slot at the top, swap with its key
+				// flip prev key to the top
+				5 0 REVERSE
+				// if prev key isn't waiting confirmation swap with it
 				s0 PUSH ISNULL <{ 2 1 REVERSE }> PUSHCONT IFJMP
 
-				// when there are no empty slots
-				// then attempting to swap with key that will *not* be confirmed
-				// flip the key and message that will be confirmed to the bottom
+				// otherwise both keys are waiting confirmation
+				// attempting to swap with key that will *not* be confirmed
+				// flip the key and message that may be confirmed to the bottom
 				s0 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 5 0 REVERSE }> PUSHCONT IF
 
-				// if either message will be confirmed or not
-				// to properly occupy last_key slot swap with key at the top
+				// in either case swap with key at the top key
+				// if confirmation is successful, two active keys are in place
+				// if confirmation not successful, prev key is at the top now
 				2 1 REVERSE
 
-				// if none of the messages will be confirmed then do not send anything
+				// if confirmation not successful then do not send anything
 				// just clear pending messages and advance seqno (alternative return)
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRETALT
 
-				// implicit return if it will be confirmed
+				// implicit return if it is successful
 			}> PUSHCONT IFNOT
 
 			// if there is pending message submitted by another key (at the bottom)
