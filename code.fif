@@ -102,13 +102,16 @@
 				// then attempting to swap with key that will *not* be confirmed
 				// flip the key and message that will be confirmed to the bottom
 				s0 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 5 0 REVERSE }> PUSHCONT IF
-				// if message that will be confirmed is at the bottom
-				// swap with key at the top
-				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 2 1 REVERSE }> PUSHCONT IFJMP
+
+				// if either message will be confirmed or not
+				// to properly occupy last_key slot swap with key at the top
+				2 1 REVERSE
 
 				// if none of the messages will be confirmed then do not send anything
 				// just clear pending messages and advance seqno (alternative return)
-				RETALT
+				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRETALT
+
+				// implicit return if it will be confirmed
 			}> PUSHCONT IFNOT
 
 			// if there is pending message submitted by another key (at the bottom)
