@@ -84,7 +84,7 @@ Other two flags aren't used:
 
 ## Contract data
 
-Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. For performance reasons contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead (equivalent to `dict,`).
+Request that is waiting for confirmation is stored as reference in contract data cell. But if there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored instead. Text below describes formats using fift serialization primitives and not to be confused with dictionaries non-standard serialization primitive `nullref,` is used instead (equivalent to `dict,`).
 
 ```
 seqno 32 u,
@@ -95,9 +95,9 @@ prev_key 256 u,
 prev_request nullref,
 ```
 
-Notably two keys along with requests are not stored at fixed positions, instead position within data cell depends on usage pattern. It is stored that way to increase performance. The key that is most likely to send external message is at the end. And reversing last 5 items switches perspective to the next most likely key.
+Notably two keys along with requests are not stored at fixed positions, instead position within data cell depends on usage pattern. The key that is most likely to send external message is at the end. And reversing last 5 items switches perspective to the next most likely key.
 
-Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule, but the performance gains of assuming which key will be used next are significant. There is automated test suite that runs through all possible combinations of external messages three keys may send. The report contains state description, gas used, and outbound message that was sent.
+Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule. There is automated test suite that runs through all possible combinations of external messages three keys may send. The report contains state description, gas used, and outbound message that was sent.
 
 ```
 ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL
