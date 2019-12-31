@@ -1,60 +1,80 @@
 # 2/3 wallet
 
-Personal 2/3 multisig wallet contract with signature collection performed on-chain. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost and is controlled by attacker.
+2/3 multisig wallet contract with signature collection performed on-chain intended to serve single person. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost and is controlled by attacker.
 
-### Three parties
+## State transitions
 
-It is intended to be operated by three parties providing service to single user.
+Unconventionally contract's seqno is not incremented after every external message, instead it represents a single round of collecting signatures. There are three rules within it:
 
-- Main key stored on device by wallet software.
-- Confirmation key stored on server by independent protection service.
-- Backup key stored somewhere safe in sealed bag by user.
+1. Each key is allowed to create only one request for confirmation, aftewards it can only send confirmations.
+1. Once confirmation is received requested action is executed, seqno incremented and next request can be sent.
+1. If all three keys send different requests, nothing is executed, seqno incremented and next request can be sent.
 
-Advanced users are likely to keep confirmation key to themself. But judging by how often MFA is used by ordinary people most confirmations are likely to be performed server side. Similarly to traditional banks protection service operating confirmation key may choose to:
+Because there are three keys, chances of one of them being stolen are higher then if there was only one. However damage is limited only to gas consumed creating single request.
+
+### Request / confirmation
+
+The most used and optimized transition path involves sending two external messages signed by two different keys. First creating request to send outbound message followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until next round allows both external messages to be sent simultaneously.
+
+### Request / cancellation / cancellation confirmation
+
+Instead of sending confirmation another key may send cancellation request. Confirmed cancellation starts new round without sending any outbound messages. Although neither of two keys can send requests anymore, sending confirmations is still allowed.
+
+### Other transitions
+
+Outbound message request is represented by valid message cell, while cancellation request is represented by cell containing no data and optional reference with explanation. It is possible to submit either kind of request at any moment. Only once two keys submit identical cell it is inspected and if its data isn't empty outbound message is sent.
+
+It is completely possible to start signature collection with cancellation request arriving first. This may happen if it was sent immediately after request it is supposed to cancel, but got included in block earlier.
+
+Although usually only one of the keys will be requesting oubound messages, instead of sending confirmation or cancellation another key can also send different outbound message request. All three keys have equal permissions and single key can't prevent other two from sending different outbound message.
+
+### Key rotation
+
+Contract's internal message handler handles a single operation to replace one of the keys. Source address of internal message has to be contract itself. So in order to replace key otherwise ordinary request with outbound message to contract itself needs to pass confirmation checks.
+
+## Use cases
+
+Although all three have equal permissions, they are expected to have distinct roles:
+
+- Main key is the one sending requests made by person owning the wallet.
+- Confirmation key is sending confirmations to requests made by main key. The only request that it may send is cancellation request.
+- Backup key is stored offline and isn't sending any requests.
+
+Contract serves single person, but there are different use cases depending on who is operating cryptographic keys.
+
+### Person performing confirmations
+
+Single person performing confirmations from secondary device is very similar to traditional MFA:
+
+- Main key is stored on desktop PC by wallet software.
+- Confirmation key is stored on mobile phone by confirmation software.
+- Backup key is stored in sealed paper bag somewhere safe.
+
+Similiraly to MFA wide scale attacks such as malware scanning for private keys are ineffective. Backup key can be used to restore access in case one of devices is lost. Compared to hardware wallet backup key on its own doesn't provide access to funds. Security requirements for storing it are significantly lower. It can be given to friend or family member.
+
+### Server performing confirmations
+
+If mobile wallet is operating main key then there is no obvious candidate for confirmation device. In that case confirmation key can be generated on server that will automatically confirm requests made by main key. User should be warned about requests made by backup key. They should be rejected for period of time that is enough for him to react in case he had not authorized them. Compared to traditional passphrase backup this gives user an early warning.
+
+But there is opportunity to provide rich confirmation service.
+
+### Third-party performing confirmations
+
+It's highly desirable for server confirmations to be performed by independent party. Confirmation key can be replaced at any moment and this is the only integration step needed. Similarly to traditional banks third-party handling confirmations may choose to:
 
 - Cancel transactions sent to known phishing addresses.
 - Cancel transactions sent to vulnerable contracts.
 - Cancel suspiciously large transfers.
 
-It's highly desirable for confirmation key to be operated by independent party. Because signatures are collected on-chain, no additional integration with wallet software is needed.
-
-## State transitions
-
-Unconventionally contract's seqno is not incremented after every external message, instead it represents a single cycle of collecting signatures. There are three rules within it:
-
-1. An individual key can create only a single request waiting for confirmation from another key, afterwards it is locked and can only send confirmation.
-1. If two keys agree: confirmed request is executed, seqno incremented, keys are unlocked.
-1. If all three keys disagree: seqno incremented, keys are unlocked.
-
-Locking is necessary to prevent draining wallet funds by attacker who acquired access to only one key.
-
-### Request / confirmation
-
-The most used and optimized transition path involves sending two external messages signed by two different keys. First creating outbound message request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Combined with the fact that seqno is not incremented until new cycle begins allows both external messages to be sent simultaneously.
-
-### Request / cancellation / cancellation confirmation
-
-In order to reject request confirmation key has to submit cancellation request that also requires confirmation. Although neither of two keys can create requests anymore, sending confirmation is still allowed. To start new cycle main key needs to confirm cancellation request.
-
-### Other transitions
-
-Outbound message request is represented by valid message cell, while cancellation request is represented by cell containing no data and optional reference with explanation. It is possible to submit either kind of request at any moment. Only once two keys submit identical cell its data is inspected and if it isn't empty outbound message is sent.
-
-It is completely possible to start signature collection with cancellation request arriving first. This may happen if it was sent immediately after request it is supposed to cancel, but got included in block earlier.
-
-It is possible to submit two different outbound message requests. Generally confirmation key should not submit outbound message request that was not previously signed by main key. But contract doesn't treat keys differently and alternative outbound message request is required when attacker controls one of the keys.
-
-### Changing the keys
-
-Contract handles a single internal operation to change one key at a time. The source address has to be contract itself. So in order to change key otherwise ordinary request containing outbound message to contract itself needs to pass confirmation checks.
+Backup key can be used to replace it if it misbehaves.
 
 ## Technicalities
 
 Contract is written in ASM and attempts to be as efficient as possible.
 
-### Constructor envelope
+### Init envelope
 
-Contract code does not contain special initialization checks (if seqno is zero). To build stateinit contract code should be wrapped into constructor envelope that immediately replaces itself with actual contract code.
+Contract code does not contain special initialization checks (if seqno is zero). To build stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code.
 
 ```
 0 constant nonce
@@ -66,11 +86,11 @@ Contract code does not contain special initialization checks (if seqno is zero).
 }>c
 ```
 
-Additional nonce constant can be tweaked to choose preferred address (containing only alphanumeric characters). Similarly to subwallet_id used by standard wallet, nonce also allows to operate two wallets with same set of keys. But nonce isn't included into external message.
+Additional nonce constant can be tweaked to choose preferred address (e.g. containing only alphanumeric characters). Similarly to subwallet_id used by standard wallet, nonce also allows to operate two wallets with same set of keys. But unlike subwallet_id, nonce isn't included into external message.
 
 ### Signing contract address
 
-Instead hash that is signed is required to include contract address. This is to ensure that message cannot be replayed from or to a different contract (or same contract in different workchain) that is using same public key and similar payload structure.
+Instead hash that is signed is required to include contract address. So external message cannot be replayed from or to a different contract (or same contract in different workchain) that is using same public key and similar payload structure.
 
 ### Valid until
 
@@ -78,16 +98,16 @@ External message contains valid_until field that restricts time when it can be a
 
 ### Mode
 
-There is no reason to have custom outbound message mode, first two necessary flags are used:
+There is no reason to allow custom outbound message mode, first two necessary flags are used:
 
 - _+1 Sender wants to pay transfer fees separately._ There is no-one else to pay them.
 - _+2 Any errors arising while processing this message during the action phase should be ignored._ Otherwise state is reverted and faulty external message can be replayed.
 - _+64 To carry all the remaining value of the inbound message._ There is no value attached to inbound external message.
 - _+128 To carry all the remaining balance of the current smart contract._ Although has potential use (quite dangerous) supporting it increases gas consumption by 15%.
 
-## Contract data
+### Contract data
 
-Request that is waiting for confirmation is stored as reference in contract data cell. If there isn't one then null is stored instead. Contract uses dictionary instructions to store such nullable reference. Dictionary store and load instructions use additional bit within cell data. That bit is 0 when null is stored, and it is 1 when cell reference is stored. Not to be confused with dictionaries non-standard serialization primitive `nullref,` is used (instead of equivalent `dict,`).
+Requests are stored as nullable reference by using additional bit that is 0 when null is stored or 1 when reference is stored. Non-standard fift serialization primitive `nullref,` is used to denote it (instead of otherwise equivalent `dict,`).
 
 ```
 seqno 32 u,
@@ -98,9 +118,9 @@ prev_key 256 u,
 prev_request nullref,
 ```
 
-Notably keys along with requests are not stored at fixed positions, instead position within contract data cell depends on usage pattern. Key at the end is most likely to send external message and its signature is checked first. If that failed then inexpensive operation reversing 5 items switches perspective to second most likely key.
+Notably contract data cell adapts to usage pattern. Key at the end is most likely to send external message and its signature is checked first. If that failed then inexpensive operation reversing 5 items switches perspective to second most likely key.
 
-Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. It is intrinsically dangerous to have such special rule. Automated test suite runs through all possible combinations of external messages three keys may send. Report contains state description, gas used, and outbound message that was sent.
+Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. Such special treatment introduces additional risks. All possible combinations of external messages three keys may send are checked by automated test suite. Report contains state description, outbound message that was sent, and gas consumed.
 
 ```
 ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD
@@ -119,7 +139,7 @@ To generate report and compare it to previously committed:
 $ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
 ```
 
-## External message format
+### External message format
 
 Given that `out_msg` is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
 
