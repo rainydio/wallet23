@@ -76,7 +76,7 @@ Contract is written in ASM. External message handler fits into two cells and pri
 
 ### Init envelope
 
-Contract code does not contain special initialization checks (if seqno is zero). Before putting into stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code. Example [wallet-new.fif] script uses such envelope.
+Contract code does not contain special initialization checks (if seqno is zero). Before putting into stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code. Example [wallet-new.fif] script uses such envelope:
 
 ```
 0 constant nonce
