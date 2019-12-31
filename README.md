@@ -18,7 +18,7 @@ The most used and optimized transition path involves sending two external messag
 
 ### Request / cancellation / cancellation confirmation
 
-Instead of sending confirmation another key may send cancellation request. Confirmed cancellation starts new round without sending any outbound messages. Although neither of two keys can send requests anymore, sending confirmations is still allowed.
+Instead of sending confirmation another key may send cancellation request. Although neither of two keys can send requests anymore, sending confirmations is still allowed. Confirmed cancellation starts new round without sending any outbound messages.
 
 ### Other transitions
 
