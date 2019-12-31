@@ -54,19 +54,21 @@ Similiraly to MFA wide scale attacks such as malware scanning for private keys a
 
 ### Server performing confirmations
 
-If mobile wallet is operating main key then there is no obvious candidate for confirmation device. In that case confirmation key can be generated on server that will automatically confirm requests made by main key. User should be warned about requests made by backup key. They should be rejected for period of time that is enough for him to react in case he had not authorized them. Compared to traditional passphrase backup this gives user an early warning.
-
-But there is opportunity to provide rich confirmation service.
+If mobile wallet is operating main key then there is no obvious candidate for confirmation device. In that case confirmation key can be generated on server that will automatically confirm requests made by main key. User should be warned about request made by backup key. He should be given enough time to react in case he had not authorized it. Compared to traditional passphrase backup this gives user an early warning.
 
 ### Third-party performing confirmations
 
-It's highly desirable for server confirmations to be performed by independent party. Confirmation key can be replaced at any moment and this is the only integration step needed. Similarly to traditional banks third-party handling confirmations may choose to:
+It's highly desirable for server confirmations to be performed by independent confirmation service. Confirmation key can be replaced at any moment and this is the only integration step needed.
 
-- Cancel transactions sent to known phishing addresses.
-- Cancel transactions sent to vulnerable contracts.
-- Cancel suspiciously large transfers.
+Similarly to traditional banks they may choose to contact user by phone to get confirmation for:
 
-Backup key can be used to replace it if it misbehaves.
+- Transfers sent to known phishing addresses.
+- Messages sent to vulnerable contracts.
+- Suspiciously large transfers.
+- Requests made by backup key.
+- Requests to replace wallet key.
+
+Honesty and procedures used by confirmation service can be tested. User is vulnarable if he looses either of two other keys. But there is no way to know if user actually lost one of his keys or is he performing a test.
 
 ## Technicalities
 
