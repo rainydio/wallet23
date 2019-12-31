@@ -16,7 +16,7 @@
 cmd "transfer" $=? { 3 $() } { null } cond constant cmd-transfer-destination-address
 cmd "transfer" $=? { 4 $() } { null } cond constant cmd-transfer-amount
 cmd "transfer" $=? { 5 $() } { null } cond constant cmd-transfer-comment
-cmd "change-key" $=? { 3 $() } { null } cond constant cmd-change-key-keyfile
+cmd "replace-key" $=? { 3 $() } { null } cond constant cmd-replace-key-keyfile
 
 
 keyfile? { keyfile load-keypair } { null null } cond constant keypriv constant keypub
@@ -121,7 +121,7 @@ begin-options
 			+"  create request to transfer <amount> GR$ to <destination address>" +cr
 			generic-help
 
-			" " keyfile $+ +" change-key <new key file>" +cr
+			" " keyfile $+ +" replace-key <new key file>" +cr
 			+"  create request to change key that can access contract from " keyfile $+ +" to <new key file>" +cr
 			generic-help
 		} if
@@ -151,13 +151,13 @@ key-msg null? and {
 	bye
 } if
 
-cmd "change-key" $=? $# 3 >= and
+cmd "replace-key" $=? $# 3 >= and
 key-msg null? and {
 	seqno now 180 +
 	address
 	keypub
-	cmd-change-key-keyfile load-generate-keypair drop
-	msgint-change-key
+	cmd-replace-key-keyfile load-generate-keypair drop
+	msgint-replace-key
 	address keypriv msgext 2 boc+>B dup "wallet-query.boc" B>file
 	bye
 } if

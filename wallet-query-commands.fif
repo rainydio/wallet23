@@ -16,7 +16,7 @@
 cmd "transfer" $=? { 3 $() } { null } cond constant cmd-transfer-destination-address
 cmd "transfer" $=? { 4 $() } { null } cond constant cmd-transfer-amount
 cmd "transfer" $=? { 5 $() } { null } cond constant cmd-transfer-comment
-cmd "change-key" $=? { 3 $() } { null } cond constant cmd-change-key-keyfile
+cmd "replace-key" $=? { 3 $() } { null } cond constant cmd-replace-key-keyfile
 
 
 keyfile? { keyfile load-keypair } { null null } cond constant keypriv constant keypub
@@ -109,7 +109,7 @@ keyfile? {
 		."  create request to transfer <amount> GR$ to <destination address>" cr
 		cr
 
-		."change-key <new key file>" cr
+		."replace-key <new key file>" cr
 		."  create request to change key that can access contract from " keyfile type ." to <new key file>" cr
 		cr
 	} if

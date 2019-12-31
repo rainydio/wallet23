@@ -72,7 +72,7 @@ Honesty and procedures used by confirmation service can be tested. User is vulna
 
 ## Technicalities
 
-Contract is written in ASM and attempts to be as efficient as possible.
+Contract is written in ASM. External message handler prioritizes performance and fits into two cells. Internal message handler isn't trading readability for performance. It ignores every message except sent by contract itself. Apart from single operation to replace key it also allows simple transfers. If operation is unknown instead of replying with bounced message back to itself it throws an error.
 
 ### Init envelope
 

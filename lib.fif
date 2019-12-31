@@ -32,9 +32,9 @@
 {                                                                                // contract,addr, old_key, new_key
 	3 -roll -rot                                                                   // new_key, old_key, contract,addr
 	<b b{01} s, b{0000} s, b{100} s, -rot addr, 1 Gram* Gram, 0 107 u,
-		OP_CHANGE_KEY 32 u, swap B, swap B,
+		OP_REPLACE_KEY 32 u, swap B, swap B,
 	b>
-} : msgint-change-key
+} : msgint-replace-key
 
 {                                                                                // seqno, valid_until, msg_out, contract,addr, priv
 	6 0 reverse                                                                    // priv, addr,contract, msg_out, valid_until, seqno

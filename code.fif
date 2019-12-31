@@ -1,6 +1,6 @@
 "Asm.fif" include
 
-0x00000001 constant OP_CHANGE_KEY
+0x00000001 constant OP_REPLACE_KEY
 
 85143  constant FN_SEQNO
 71784  constant FN_LASTMSG
@@ -13,152 +13,137 @@
 34 constant ERR_EXP
 35 constant ERR_SIG
 36 constant ERR_REPLAY
-37 constant ERR_UNAUTHORIZED
 38 constant ERR_KEY_EXISTS
 39 constant ERR_KEY_NOT_FOUND
 40 constant ERR_OP_UNKNOWN
 
 <{
-	// codepage setting costs 26 gas or more than 1%
 	SETCP0
 
 	// external message handler function id is -1
-	// incrementing function id and using ifnot is cheaper
-	// than otherwise equivalent comparison to -1
+	// ifnot(++function_id) cheaper than if(function_id == -1)
 	DUP INC <{
-		// pick external message slice
-		// cut signature out of it
-		// make copy of remainder (gonna need that later)
-		// concatenate contract address with remainder
-		// compute hash that was signed
+		// hash that was signed includes contract address
 		OVER
 		512 INT LDSLICEX
 		DUP MYADDR
 		NEWC STSLICE STSLICE ENDC
 		HASHCU
 
-		// take that remainder and load
-		// seqno, valid until, and message cell to be sent
+		// seqno, valid_until, out_msg|cancellation
 		SWAP 32 LDU 32 LDU PLDREF
 
-		// unpack contract data cell
-		// although first reference (if any) is last pending message
-		// and second reference (if any) is previous pending message
-		// load dictionary operation is cheaper than handling missing references
+		// dictionary operations are cheaper than handling missing references
 		// with main disadvantage being keys not aligned to bytes
 		PUSHROOT
 		CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
 
-		// note that top 5 stack items (s0...s4) loaded from data are symmetrical
+		// top 5 stack items (s0...s4) loaded from data are symmetrical
 		//
 		// s10 signature
 		// s9  signed_hash
 		// s8  seqno
 		// s7  valid_until
-		// s6  msg
+		// s6  out_msg|cancellation
 		// s5  stored_seqno
-		// s4  last_msg
+		// s4  last_request
 		// s3  last_key
 		// s2  third_key
 		// s1  prev_key
-		// s0  prev_msg
+		// s0  prev_request
 
-		// check valid until and compare seqnos
+		// check valid_until, compare seqnos
 		s5 s8 s7 PUSH3
 		NOW GEQ ERR_EXP THROWIFNOT
 		EQUAL ERR_SEQNO THROWIFNOT
 
 		<{
-			// there are two return paths
-			// normal (down at the very bottom) and alternative (next continuation)
-			// notably alternative return is executed from nested continuations
 			<{
-				// alternative return path clears pending messages
+				// alternative return
+				// clear requests
 				DROP NULL 4 3 BLKPUSH
-				// and pushes incremented seqno on top of the stack
+				// push incremented seqno on top
 				s9 PUSH INC
 			}> PUSHCONT SETEXITALT
 
-			// checking signature against most likely used key (on top)
+			// check signature against most likely used prev_key
 			s9 s10 s1 PUSH3 CHKSIGNU <{
-				// if it failed then reversing top 5 items puts second most likely key
-				// and its previously stored pending message (if any) on top
+				// if failed flipping to second most likely used last_key
 				5 0 REVERSE
 				s9 s10 s1 PUSH3 CHKSIGNU IFRET
 
-				// if that failed too, then it's either a third key or signature error
+				// if failed too it must be third_key
 				s9 s10 s2 PUSH3 CHKSIGNU ERR_SIG THROWIFNOT
 
-				// stack reordering for third key is rare and code size is prioritized
-				// in order to fit external message handler into two cells
-
-				// flip prev key to the top
+				// flip prev_key back to the top
 				5 0 REVERSE
-				// if prev key isn't waiting confirmation swap with it
+				// if there is no request by prev_key swap third_key with it
 				s0 PUSH ISNULL <{ 2 1 REVERSE }> PUSHCONT IFJMP
+				// otherwise both last_key and prev_key are waiting confirmations
+				// third_key has to swap with key that will *not* be confirmed
 
-				// otherwise both keys are waiting confirmation
-				// attempting to swap with key that will *not* be confirmed
-				// flip the key and message that may be confirmed to the bottom
+				// whatever key and request that may be confirmed will be at the bottom
 				s0 PUSH HASHCU s7 PUSH HASHCU EQUAL <{ 5 0 REVERSE }> PUSHCONT IF
 
-				// in either case swap with key at the top key
-				// if confirmation is successful, two active keys are in place
-				// if confirmation not successful, prev key is at the top now
+				// swap with key at the top in any case if confirmation
+				//  ... successful two active keys are in place
+				//  ... not successful prev_key is swapped with third_key
 				2 1 REVERSE
 
-				// if confirmation not successful then do not send anything
-				// just clear pending messages and advance seqno (alternative return)
+				// alternative return if not successful
 				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRETALT
-
-				// implicit return if it is successful
+				// otherwise implicit return
 			}> PUSHCONT IFNOT
 
-			// if there is pending message submitted by another key (at the bottom)
-			s4 PUSH ISNULL <{
-				// compare it to one received in external message
-				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRET
+			// whatever current key and request it previously made are at the top
+			// request by another key is at the bottom
 
-				// succefull confirmation (they match)
-				// if message cell has no data (cancelation confirmation)
-				// then jump to alternative return
+			// if there was request by another key
+			s4 PUSH ISNULL <{
+				// compare with received
+				s4 PUSH HASHCU s7 PUSH HASHCU EQUAL IFNOTRET
+				// succefull confirmation
+
+				// alternative return if cancellation
 				s6 PUSH CTOS SDEMPTY IFRETALT
 
-				// sending message
+				// outbound message
 				s6 PUSH 3 INT SENDRAWMSG
 
-				// clear pending messages and advance seqno (alternative return)
+				// alternative return
 				RETALT
 			}> PUSHCONT IFNOT
 
-			// normal return path storing message and waiting for confirmation
-			// check if key can store pending message
+			// normal return
+			// only one request can be stored
 			s0 PUSH ISNULL ERR_REPLAY THROWIFNOT
-			// swap received message with empty slot (null)
+			// swap received request with null
 			s6 XCHG0
 			// and push seqno on top without incrementing
 			s5 PUSH
-		}>c CALLREF // slightly cheaper than executing continuation
+		}>c CALLREF // cheaper than executing
 
-		// both exits from previous continuation push seqno on top of the stack
-		// current key and pending message (on top) are stored near seqno
-		// and will be at the bottom during next execution
+		// both exits push seqno on top
+		// current key and its request are on top now and stored near seqno
+		// will be at the bottom during next execution (last_request, last_key)
 		NEWC 32 STU STDICT 256 STU 256 STU 256 STU STDICT ENDC
 		POPROOT
 		ACCEPT
 	}> PUSHCONT IFNOTJMP
 
 	DUP <{
-		// check bounced flag
+		// ignore bounced messages
 		s2 PUSH CTOS 4 LDU SWAP 1 INT AND IFRET
 
+		// ignore messages not sent by contract itself
+		LDMSGADDR DROP MYADDR SDEQ IFNOTRET
+
 		// simple transfer if no op field or it is zero
-		s2 PUSH 32 LDUQ IFNOTRET OVER IFNOTRET
+		OVER 32 LDUQ IFNOTRET OVER ISZERO IFRET
 
-		OVER OP_CHANGE_KEY INT EQUAL <{
-			s2 PUSH LDMSGADDR DROP MYADDR SDEQ ERR_UNAUTHORIZED THROWIFNOT
-
+		OVER OP_REPLACE_KEY INT EQUAL <{
 			PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
+
 			s6 PUSH 256 LDU 256 LDU ENDS
 
 			// s7  seqno
