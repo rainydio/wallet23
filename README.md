@@ -72,11 +72,11 @@ Honesty and procedures used by confirmation service can be tested. User is vulna
 
 ## Technicalities
 
-Contract is written in ASM. External message handler prioritizes performance and fits into two cells. Internal message handler isn't trading readability for performance. It ignores every message except sent by contract itself. Apart from single operation to replace key it also allows simple transfers. If operation is unknown instead of replying with bounced message back to itself it throws an error.
+Contract is written in ASM. External message handler fits into two cells and prioritizes interaction of two keys. Internal message handler ignores any message that wasn't sent by contract itself.
 
 ### Init envelope
 
-Contract code does not contain special initialization checks (if seqno is zero). To build stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code.
+Contract code does not contain special initialization checks (if seqno is zero). Before putting into stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code. Example [wallet-new.fif] script uses such envelope.
 
 ```
 0 constant nonce
@@ -96,7 +96,7 @@ Instead hash that is signed is required to include contract address. So external
 
 ### Valid until
 
-External message contains valid_until field that restricts time when it can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
+External message includes valid_until field that restricts time when it can be accepted by contract. It has no effect on how long it might take to receive confirmation. There is no parameter controlling request expiration.
 
 ### Mode
 
@@ -138,47 +138,28 @@ OK     - KEY2_MSG1      MSG1   2                    3570    8826   KEY2 KEY1 KEY
 To generate report and compare it to previously committed:
 
 ```sh
-$ (fift -s test.fif key1 && fift -s test.fif key2 && fift -s test.fif key3) > test-report.txt && git difftool test-report.txt
+$ (fift -s test-report.fif key1 && fift -s test-report.fif key2 && fift -s test-report.fif key3) > test-report.txt && git difftool test-report.txt
 ```
 
 ### External message format
 
-Given that `out_msg` is valid outbound message cell, external message body is similar to one used by simpliest wallet, but lacks mode field:
+Because outbound message request is represented by valid message cell, external message body layout is similar to one used by simpliest wallet, but lacks mode field:
 
 ```
-signature B, seqno 32 u, valid_until 32 u, out_msg ref,
+signature B,
+seqno 32 u,
+valid_until 32 u,
+out_msg ref,
 ```
 
-Importantly hash that is signed includes contract address:
+Importantly hash that is signed is built from cell that includes contract address:
 
 ```
-b{100} s, contract_address addr, seqno 32 u, valid_until 32 u, out_msg ref,
+b{100} s,
+contract_address addr,
+seqno 32 u,
+valid_until 32 u,
+out_msg ref,
 ```
 
-Everything together creating external message cell:
-
-```
-<b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
-
-  <b b{100} s, contract_address addr,
-    seqno 32 u, valid_until 32 u, out_msg ref,
-  b> hashu privkey ed25519_sign_uint B,
-
-  seqno 32 u, valid_until 32 u, out_msg ref,
-b>
-```
-
-Cancellation is represented by cell containing no data, so external message carrying simpliest cancellation:
-
-```
-<b b{1000} s, b{100} s, contract_address addr, 0 Gram, b{00} s,
-
-  <b b{100} s, contract_address addr,
-    seqno 32 u, valid_until 32 u, <b b> ref,
-  b> hashu privkey ed25519_sign_uint B,
-
-  seqno 32 u, valid_until 32 u, <b b> ref,
-b>
-```
-
-Additionally cancellation cell may include optional reference with explanation encoded using simple transfer format.
+[wallet-new.fif]: https://github.com/rainydio/wallet23/blob/master/wallet-new.fif

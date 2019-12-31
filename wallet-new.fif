@@ -4,44 +4,76 @@
 "TonUtil.fif" include
 "GetOpt.fif" include
 
+0                constant nonce
+"key1.pk"        constant key1_filename
+"key2.pk"        constant key2_filename
+"key3.pk"        constant key3_filename
+"wallet-new.boc" constant boc_filename
+"wallet.addr"    constant addr_filename
+
+$# 1 < {
+	."fift -s " $0 type ." <workchain id> [options]" cr
+	."  create new wallet in workchain <workchain id>" cr
+	cr
+	."options:" cr
+	."  --nonce=0              nonce added to stateinit randomizing contract address" cr
+	."  --key1=key1.pk         first key filename" cr
+	."  --key2=key2.pk         second key filename" cr
+	."  --key3=key3.pk         third key filename" cr
+	."  --boc=wallet-new.boc   stateinit message filename" cr
+	."  --addr=wallet.addr     addr filename" cr
+
+	100 halt
+} if
+
+$1 parse-int constant workchain_id
 begin-options
-	" <workchain id> [nonce]" +cr
-	+"  create new wallet in <workchain id> adding [nonce] to stateinit" +cr
-	generic-help
+	"--nonce" { parse-int =: nonce         } long-option-arg
+	"--key1"  {           =: key1_filename } long-option-arg
+	"--key2"  {           =: key2_filename } long-option-arg
+	"--key3"  {           =: key3_filename } long-option-arg
+	"--boc"   {           =: boc_filename  } long-option-arg
+	"--addr"  {           =: addr_filename } long-option-arg
 parse-options
 
-$# 1 < { show-options-help 100 halt } if
+key1_filename load-generate-keypair drop constant key1pub
+key2_filename load-generate-keypair drop constant key2pub
+key3_filename load-generate-keypair drop constant key3pub
 
-$1 parse-int constant workchain-id
-$# 2 >= { 2 $() parse-int } { 0 } cond constant nonce
+<{
+	SETCP0 ACCEPT
+	nonce INT
+	"code.fif" include PUSHREF SETCODE
+}>c constant envelope
 
-"key1.pk" load-generate-keypair drop constant key1pub
-"key2.pk" load-generate-keypair drop constant key2pub
-"key3.pk" load-generate-keypair drop constant key3pub
+<b
+	1 32 u,
+	b{0} s,
+	key2pub B,
+	key3pub B,
+	key1pub B,
+	b{0} s,
+b> constant data
 
-	<{ SETCP0 ACCEPT nonce INT "code.fif" include PUSHREF SETCODE }>c
-constant code
-	<b 1 32 u, b{0} s, key2pub B, key3pub B, key1pub B, b{0} s, b>
-constant root
-	<b b{0011} s, code ref, root ref, dictnew dict, b>
-constant stateinit
-	workchain-id stateinit hashu
-2constant address
-	<b b{1000100} s, address addr, b{000010} s, stateinit <s s, b{0} s, b>
-constant msg-constructor
+<b
+	b{0011} s,
+	envelope ref,
+	data ref,
+	dictnew dict,
+b> constant stateinit
 
+workchain_id stateinit hashu 2constant contract_address
 
-address "wallet-address.addr" save-address-verbose
-address 7 smca>$ $>s dup sbits 8 / B@ "wallet-address.txt" B>file
-msg-constructor 2 boc+>B dup "wallet-new.boc" B>file
+<b
+	b{1000100} s,
+	contract_address addr,
+	b{000010} s,
+	stateinit <s s,
+	b{0} s,
+b> constant stateinit_msg
+
+contract_address addr_filename save-address-verbose
+stateinit_msg 2 boc+>B dup boc_filename B>file
+
 cr
-
-."wget https://test.ton.org/ton-lite-client-test1.config.json -O ton-global.config" cr
-."  download testnet lite-client config" cr
-cr
-."lite-client -c 'sendfile wallet-new.boc'" cr
-."  send constructor message" cr
-cr
-."lite-client -c 'last' -c 'saveaccount wallet-state.boc " address 7 smca>$ type ."'" cr
-."  download latest wallet state" cr
-cr
+contract_address 7 smca>$ type cr
