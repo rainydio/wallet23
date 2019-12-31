@@ -34,7 +34,7 @@ Contract's internal message handler handles a single operation to replace one of
 
 ## Use cases
 
-Although all three have equal permissions, they are expected to have distinct roles:
+All three keys have equal permissions, but they are expected to have distinct roles:
 
 - Main key is the one sending requests made by person owning the wallet.
 - Confirmation key is sending confirmations to requests made by main key. The only request that it may send is cancellation request.
