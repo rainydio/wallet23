@@ -72,11 +72,28 @@ Honesty and procedures used by confirmation service can be tested. User is vulna
 
 ## Technicalities
 
-Contract is written in ASM. External message handler fits into two cells and prioritizes interaction of two keys. Internal message handler ignores any message that wasn't sent by contract itself.
+Contract is written in ASM. Automated test in [test-report.fif] runs through all combinations of external messages three keys may send. Report is saved into [test-report.txt] and contains state description, outbound message that was sent, and gas consumed.
+
+```
+ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD
+=================================================================================
+OK   KEY1_MSG1                 1   MSG1             2566    2566   KEY1 KEY2 KEY3
+OK   - KEY2_MSG1        MSG1   2                    3466    6032   KEY2 KEY1 KEY3
+OK   - KEY2_MSG2               1   MSG1 MSG2        2690    5256   KEY2 KEY1 KEY3
+OK     - KEY1_MSG2      MSG2   2                    3466    8722   KEY1 KEY2 KEY3
+OK     - KEY2_MSG1      MSG1   2                    3570    8826   KEY2 KEY1 KEY3
+...
+```
+
+To generate report and compare it to previously committed:
+
+```sh
+$ (fift -s test-report.fif key1 && fift -s test-report.fif key2 && fift -s test-report.fif key3) > test-report.txt && git difftool test-report.txt
+```
 
 ### Init envelope
 
-Contract code does not contain special initialization checks (if seqno is zero). Before putting into stateinit contract code should be wrapped into init envelope that will replace itself with actual contract code. Example [wallet-new.fif] script uses such envelope:
+Contract code does not contain special initialization checks (if seqno is zero). When building stateinit contract code should be wrapped into init envelope. Example [wallet-new.fif] script uses such envelope:
 
 ```
 0 constant nonce
@@ -122,24 +139,7 @@ prev_request nullref,
 
 Notably contract data cell adapts to usage pattern. Key at the end is most likely to send external message and its signature is checked first. If that failed then inexpensive operation reversing 5 items switches perspective to second most likely key.
 
-Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. Such special treatment introduces additional risks. All possible combinations of external messages three keys may send are checked by automated test suite. Report contains state description, outbound message that was sent, and gas consumed.
-
-```
-ERR  MSG                SENT   N   KEY1 KEY2 KEY3    GAS   TOTAL   LAST PREV THRD
-=================================================================================
-OK   KEY1_MSG1                 1   MSG1             2566    2566   KEY1 KEY2 KEY3
-OK   - KEY2_MSG1        MSG1   2                    3466    6032   KEY2 KEY1 KEY3
-OK   - KEY2_MSG2               1   MSG1 MSG2        2690    5256   KEY2 KEY1 KEY3
-OK     - KEY1_MSG2      MSG2   2                    3466    8722   KEY1 KEY2 KEY3
-OK     - KEY2_MSG1      MSG1   2                    3570    8826   KEY2 KEY1 KEY3
-...
-```
-
-To generate report and compare it to previously committed:
-
-```sh
-$ (fift -s test-report.fif key1 && fift -s test-report.fif key2 && fift -s test-report.fif key3) > test-report.txt && git difftool test-report.txt
-```
+Using third key invokes relatively complex and expensive procedure of swapping it with one of two other keys. Such special treatment introduces additional risks.
 
 ### External message format
 
@@ -163,3 +163,5 @@ out_msg ref,
 ```
 
 [wallet-new.fif]: https://github.com/rainydio/wallet23/blob/master/wallet-new.fif
+[test-report.fif]: https://github.com/rainydio/wallet23/blob/master/test-report.fif
+[test-report.txt]: https://github.com/rainydio/wallet23/blob/master/test-report.txt
