@@ -1,0 +1,78 @@
+#!/bin/env -S fift -s
+
+"Asm.fif" include
+"TonUtil.fif" include
+
+$# 0 = {
+	."fift -s " $0 type ." <workchain id> <nonce>" cr
+	."  create new wallet in <workchain id>" cr
+	."  preferred address can be chosen by tweaking <nonce> that is added to StateInit" cr
+	."  private key files are created if they don't already exist" cr
+	cr
+	."files:" cr
+	."  key1.pk - first private key" cr
+	."  key2.pk - second private key" cr
+	."  key3.pk - third private key" cr
+	."  contract-address.addr - contract address output" cr
+	."  msg-init.boc - init message output" cr
+
+	100 halt
+} if
+
+
+$1 parse-int
+constant workchain_id
+
+$2 parse-int
+constant nonce
+
+"key1.pk" load-generate-keypair drop
+constant key1_pub
+
+"key2.pk" load-generate-keypair drop
+constant key2_pub
+
+"key3.pk" load-generate-keypair drop
+constant key3_pub
+
+<{
+	SETCP0 ACCEPT
+	nonce INT
+	"../code.fif" include PUSHREF SETCODE
+}>c constant envelope
+
+<b
+	1 32 u,
+	b{0} s,
+	key2_pub B,
+	key3_pub B,
+	key1_pub B,
+	b{0} s,
+b> constant data
+
+<b
+	b{0011} s,
+	envelope ref,
+	data ref,
+	dictnew dict,
+b> constant stateinit
+
+workchain_id
+stateinit hashu
+2constant contract_address
+
+<b
+	b{1000100} s,
+	contract_address addr,
+	b{000010} s,
+	stateinit <s s,
+	b{0} s,
+b> constant msg_init
+
+contract_address "contract-address.addr" save-address-verbose
+msg_init 2 boc+>B dup "msg-init.boc" B>file
+
+cr
+."address:        " contract_address .addr cr
+."bounceable:     " contract_address 6 smca>$ type cr
+."non-bounceable: " contract_address 7 smca>$ type cr

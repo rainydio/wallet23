@@ -1,5 +1,9 @@
 "Asm.fif" include
-"code.fif" include drop
+"TonUtil.fif" include
+
+{
+	dict,
+} : nullref,
 
 {
 	1 u@+ swap { ref@+ swap } { null swap } cond
@@ -10,8 +14,12 @@
 } : nullref@
 
 {
-	dict,
-} : nullref,
+	dup null? { drop null? } {
+		over null? { nip null? } {
+			hashu swap hashu =
+		} cond
+	} cond
+} : nullref=
 
 {
 	2dup <s s-fits? {
@@ -21,141 +29,158 @@
 	} cond
 } : body,
 
+{
+	1 u@+ swap { ref@+ swap } { s>c } cond
+} : body@
 
 {
-	swap 3 -roll 3 -roll                                                           // dest,addr, amount, comment
-	<b b{01} s, b{0000} s, b{100} s, -rot addr, swap Gram, 0 106 u,
-		swap simple-transfer-body body,
-	b>
-} : msgint-transfer
-
-{                                                                                // contract,addr, old_key, new_key
-	3 -roll -rot                                                                   // new_key, old_key, contract,addr
-	<b b{01} s, b{0000} s, b{100} s, -rot addr, 1 Gram* Gram, 0 107 u,
-		OP_REPLACE_KEY 32 u, swap B, swap B,
-	b>
-} : msgint-replace-key
-
-{                                                                                // seqno, valid_until, msg_out, contract,addr, priv
-	6 0 reverse                                                                    // priv, addr,contract, msg_out, valid_until, seqno
-	<b swap 32 u, swap 32 u, swap ref, b>                                          // priv, addr,contract, payload
-	4 0 reverse                                                                    // payload, contract,addr, priv
-	<b b{100} s, 3 pick 3 pick addr, 4 pick <s s, b> hashu                         // payload, contract,addr, priv, signed_hash
-	swap ed25519_sign_uint -rot                                                    // payload, signature, contract,addr
-	<b b{1000} s, b{100} s, -rot addr, 0 Gram, b{00} s, swap B, swap <s s, b>      // msg
-} : msgext
+	dup null? { drop null? } {
+		over null? { nip null? } {
+			B=
+		} cond
+	} cond
+} : nullB=
 
 {
-	<s 32 u@
-} : root-seqno
+	<s
+		32 u@+ drop
+} : seqno
 
 {
-	<s 32 u@+ nullref@
-	nip
-} : root-last-msg
+	<s
+		32 u@+ nip
+		nullref@+ nip
+		32 B@+ 32 B@+ 32 B@+ drop
+
+	2dup Bcmp -1 = { swap } if rot
+	2dup Bcmp -1 = { swap } if -rot
+	2dup Bcmp 1 = { swap } if
+} : keys
 
 {
-	<s 32 u@+ nullref@+ 256 u@ 256 u>B
-	3 0 reverse { drop } 2 times
-} : root-last-key
+	<s
+		32 u@+ nip
+		nullref@+ drop
+} : last_request
+
+{ last_request null? not } : last_request?
 
 {
-	<s 32 u@+ nullref@+ 256 u@+ 256 u@ 256 u>B
-	4 0 reverse { drop } 3 times
-} : root-third-key
+	dup last_request? {
+		<s
+			32 u@+ nip
+			nullref@+ nip
+			32 B@+ drop
+	} { drop null } cond
+} : last_request_key
+
+{ last_request_key null? not } : last_request_key?
+{ last_request_key nullB= } : last_request_key=
 
 {
-	<s 32 u@+ nullref@+ 256 u@+ 256 u@+ 256 u@ 256 u>B
-	5 0 reverse { drop } 4 times
-} : root-prev-key
+	<s
+		32 u@+ nip
+		nullref@+ nip
+		32 B@+ nip
+		32 B@+ nip
+		32 B@+ nip
+		nullref@+ drop
+} : prev_request
 
 {
-	<s 32 u@+ nullref@+ 256 u@+ 256 u@+ 256 u@+ nullref@
-	6 0 reverse { drop } 5 times
-} : root-prev-msg
+	prev_request null? not
+} : prev_request?
 
-{                                                                                // root, keypub
-	over root-third-key over B= {
+{
+	dup prev_request? {
+		<s
+			32 u@+ nip
+			nullref@+ nip
+			32 B@+ nip
+			32 B@+ nip
+			32 B@+ drop
+	} { drop null } cond
+} : prev_request_key
+
+{ prev_request_key null? not } : prev_request_key?
+{ prev_request_key nullB= } : prev_request_key=
+
+{
+	2dup last_request_key= {
+		nip last_request
+	} {
+		2dup prev_request_key= {
+			nip prev_request
+		} {
+			2drop null
+		} cond
+	} cond
+} : my_request
+
+{ my_request null? not } : my_request?
+
+{
+	2dup my_request? {
+		2dup last_request_key= {
+			nip prev_request
+		} {
+			nip last_request
+		} cond
+	} {
+		dup prev_request? {
+			nip prev_request
+		} {
+			nip last_request
+		} cond
+	} cond
+} : other_request1
+
+{ other_request1 null? not } : other_request1?
+
+{
+	2dup my_request? {
+		2dup last_request_key= {
+			nip prev_request_key
+		} {
+			nip last_request_key
+		} cond
+	} {
+		dup prev_request? {
+			nip prev_request_key
+		} {
+			nip last_request_key
+		} cond
+	} cond
+} : other_request1_key
+
+{ other_request1_key null? not } : other_request1_key?
+{ other_request1_key nullB= } : other_request1_key=
+
+{
+	2dup my_request? {
 		2drop null
 	} {
-		over root-prev-key over B= {
-			drop root-prev-msg
+		dup prev_request? {
+			nip last_request
 		} {
-			over root-last-key over B= {
-				drop root-last-msg
-			} {
-				true abort"key not found"
-			} cond
+			2drop null
 		} cond
 	} cond
-} : root-key-msg
+} : other_request2
 
-	0 0x0000111100001111000011110000111100001111000011110000111100001111
-2constant test-address
+{ other_request2 null? not } : other_request2?
 
-// (root, code_filename, msgext) -> (root', c5, err, gas_consumed, accepted)
 {
-	{
-		x{F800} @addop
-		c7 PUSH TRUE 25 INT SETINDEXVARQ c7 POP
-	} : ACCEPT
-
-	{
-		x{F801} @addop
-		c7 PUSH TRUE 25 INT SETINDEXVARQ c7 POP
-	} : SETGASLIMIT
-
-
-	<s 4 u@+ nip 3 u@+ 8 i@+ 256 u@+ Gram@+ nip 2 u@+ nip
-	4 0 reverse <b swap 3 u, swap 8 i, swap 256 u, b> <s
-	| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , swap , 1 tuple                             // root, code_filename, msgext_slice, c7
-	rot                                                                            // root, msgext_slice, c7, code_filename
-
-	<{
-		c7 PUSH FALSE 25 INT SETINDEXVARQ c7 POP
-		<{
-			rot include CALLREF
-			0 INT
-		}> PUSHCONT <{
-			NIP
-		}> PUSHCONT 2 1 TRYARGS
-		c5 PUSH
-		c7 PUSH
-	}>s                                                                            // root, msgext_slice, c7, code_slice
-
-	-1 -rot swap 4 roll swap                                                       // msgext_slice, -1, code_slice, root, c7
-	10430
-	gasrunvmctx                                                                    // err, c5, c7', 0, root', gas_consumed
-
-	rot drop                                                                       // err, c5, c7, root, gas_consumed
-	rot 25 [] swap                                                                 // err, c5, root, accepted, gas_consumed
-	over { 562 } { 422 } cond - swap                                               // err, c5, root, gas_consumed', accepted
-	4 2 exch2                                                                      // root, c5, err, gas_consumed, accepted
-
-	{ x{F800} @addop } : ACCEPT
-	{ x{F801} @addop } : SETGASLIMIT
-} : test-run-external
-
-{                                                                                // root, code, method
-	-rot <s swap runvm
-	over 0<> { abort"test-run-method1" } if
-	nip swap
-} : test-run-method1
-
-{                                                                                // c5, msgint, mode
-	rot <s                                                                         // msgint, mode, c5_slice
-	dup empty? { drop drop drop false } {
-		ref@+ 3 -roll                                                                // c5_next, msgint, mode, c5_slice
-		32 u@+ swap                                                                  // c5_next, msgint, mode, args_slice, action
-		0x0EC3C86D = {                                                               // c5_next, msgint, mode, args_slice
-			8 u@+ ref@                                                                 // c5_next, msgint, mode, sent_mode, sent_msgint
-			hashu 3 pick hashu = swap 2 pick = and {
-				drop drop drop true
-			} {
-				@' has-sendrawmsg
-			} cond
+	2dup my_request? {
+		2drop null
+	} {
+		dup prev_request? {
+			nip last_request_key
 		} {
-			drop @' has-sendrawmsg
+			2drop null
 		} cond
 	} cond
-} : has-sendrawmsg
+} : other_request2_key
+
+{ other_request2_key null? not } : other_request2_key?
+{ other_request2_key nullB= } : other_request2_key=

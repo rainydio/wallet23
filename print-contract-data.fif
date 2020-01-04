@@ -1,0 +1,159 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+"../lib.fif" include
+
+$# 0 = {
+	."fift -s " $0 type ." <selector> ..." cr
+	."  print information stored in contract data cell" cr
+	."  contract data cell has to be downloaded from blockchain first" cr
+	cr
+	."selectors:" cr
+	."  seqno" cr
+	."  keys - hex of three public keys" cr
+	."  last_request - description of last request" cr
+	."  last_request_key - hex of key that made last request" cr
+	."  prev_request - description of prev request (before last)" cr
+	."  prev_request_key - hex of key that made prev request" cr
+	."  my_request <private key file> - description of request made by provided key" cr
+	."  other_request1 <private key file> - description of first request made by other than provided key" cr
+	."  other_request1_key <private key file> - hex of other than provided key that made first request" cr
+	."  other_request2 <private key file> - description of second request made by other than provided key" cr
+	."  other_request2_key <private key file> - hex of other than provided key that made second request" cr
+	cr
+	."files:" cr
+	."  contract-address.addr - contract address input" cr
+	."  contract-data.boc - contract data cell input" cr
+
+	100 halt
+} if
+
+"contract-data.boc" file>B B>boc
+constant contract_data
+
+"contract-address.addr" load-address
+2constant contract_address
+
+{
+	<s
+
+	dup sbits 0 = {
+		dup srefs 0 = {
+			drop
+			"cancellation"
+		} {
+			ref@ <s dup sbits 8 / $@
+			"cancellation | " swap $+
+		} cond
+	} {
+		2 u@+ nip
+		1 i@+ 3 u@+ nip
+		3 u@+ nip 8 i@+ 256 u@+
+		Gram@+
+		106 u@+ nip
+		body@
+		""
+
+		// 5 bounce
+		// 4 destination_workchain
+		// 3 destination_address
+		// 2 amount
+		// 1 body
+		// 0 description
+
+		4 pick 4 pick contract_address rot = -rot = and {
+			1 pick <s 32 u@ 1 = {
+				"replace key " $+
+				1 pick <s 32 u@+ nip 256 u@ (x.) $+
+				" with " $+
+				1 pick <s 32 u@+ nip 256 u@+ nip 256 u@ (x.) $+
+			} {
+				"unknown contract command" $+
+			} cond
+		} {
+			"GR$" $+
+			2 pick (.GR) $+
+			" to " $+
+			4 pick 4 pick 7 pick 7 + smca>$ $+
+			5 pick { " (bounceable)" } { " (non-bounceable)" } cond $+
+
+			1 pick <s 32 u@ 0 = {
+				" | simple transfer" $+
+				1 pick <s 32 u@+ nip dup sbits 8 / $@
+				dup $len { " | " swap $+ } if $+
+			} if
+		} cond
+
+		5 -roll { drop } 5 times
+	} cond
+} : (.request)
+
+
+$1 constant selector
+
+"seqno" selector $= {
+	contract_data seqno (.) type cr
+} if
+
+"keys" selector $= {
+	contract_data keys Bx. cr Bx. cr Bx. cr
+} if
+
+"last_request" selector $= {
+	contract_data last_request? {
+		contract_data last_request (.request) type cr
+	} if
+} if
+
+"last_request_key" selector $= {
+	contract_data last_request_key? {
+		contract_data last_request_key Bx. cr
+	} if
+} if
+
+"prev_request" selector $= {
+	contract_data prev_request? {
+		contract_data prev_request (.request) type cr
+	} if
+} if
+
+"prev_request_key" selector $= {
+	contract_data prev_request_key? {
+		contract_data prev_request_key Bx. cr
+	} if
+} if
+
+
+$# 2 < { bye } if
+
+$2 file>B priv>pub constant public_key
+
+"my_request" selector $= {
+	public_key contract_data my_request? {
+		public_key contract_data my_request (.request) type cr
+	} if
+} if
+
+"other_request1" selector $= {
+	public_key contract_data other_request1? {
+		public_key contract_data other_request1 (.request) type cr
+	} if
+} if
+
+"other_request1_key" selector $= {
+	public_key contract_data other_request1_key? {
+		public_key contract_data other_request1_key Bx. cr
+	} if
+} if
+
+"other_request2" selector $= {
+	public_key contract_data other_request2? {
+		public_key contract_data other_request2 (.request) type cr
+	} if
+} if
+
+"other_request2_key" selector $= {
+	public_key contract_data other_request2_key? {
+		public_key contract_data other_request2_key Bx. cr
+	} if
+} if

@@ -3,11 +3,17 @@
 0x00000001 constant OP_REPLACE_KEY
 
 85143  constant FN_SEQNO
-71784  constant FN_LASTMSG
-127202 constant FN_LASTKEY
-78577  constant FN_THIRDKEY
-91425  constant FN_PREVKEY
-101803 constant FN_PREVMSG
+117603 constant FN_KEYS
+96856  constant FN_LAST_REQUEST
+68767  constant FN_LAST_REQUEST_KEY
+88061  constant FN_PREV_REQUEST
+87099  constant FN_PREV_REQUEST_KEY
+111528 constant FN_THIRD_KEY
+72307  constant FN_MY_REQUEST
+89847  constant FN_OTHER_REQUEST1
+90253  constant FN_OTHER_REQUEST1_KEY
+93844  constant FN_OTHER_REQUEST2
+101983 constant FN_OTHER_REQUEST2_KEY
 
 33 constant ERR_SEQNO
 34 constant ERR_EXP
@@ -16,11 +22,18 @@
 38 constant ERR_KEY_EXISTS
 39 constant ERR_KEY_NOT_FOUND
 40 constant ERR_OP_UNKNOWN
+41 constant ERR_FN_UNKNOWN
+
+// similar to CALLDICT for integeres higher than 256
+{
+	INT c3 PUSH EXECUTE
+} : CALLFN
 
 <{
 	SETCP0
 
-	// external message handler function id is -1
+	// EXTERNAL MESSAGE HANDLER
+
 	// ifnot(++function_id) cheaper than if(function_id == -1)
 	DUP INC <{
 		// hash that was signed includes contract address
@@ -30,7 +43,7 @@
 		NEWC STSLICE STSLICE ENDC
 		HASHCU
 
-		// seqno, valid_until, out_msg|cancellation
+		// seqno, valid_until, request|confirmation
 		SWAP 32 LDU 32 LDU PLDREF
 
 		// dictionary operations are cheaper than handling missing references
@@ -44,7 +57,7 @@
 		// s9  signed_hash
 		// s8  seqno
 		// s7  valid_until
-		// s6  out_msg|cancellation
+		// s6  request|confirmation
 		// s5  stored_seqno
 		// s4  last_request
 		// s3  last_key
@@ -107,7 +120,7 @@
 				// alternative return if cancellation
 				s6 PUSH CTOS SDEMPTY IFRETALT
 
-				// outbound message
+				// send outbound message
 				s6 PUSH 3 INT SENDRAWMSG
 
 				// alternative return
@@ -124,12 +137,15 @@
 		}>c CALLREF // cheaper than executing
 
 		// both exits push seqno on top
-		// current key and its request are on top now and stored near seqno
-		// will be at the bottom during next execution (last_request, last_key)
+		// current key and its request are on top now and will be stored near seqno
+		// during next execution they will be at the bottom (last_request, last_key)
 		NEWC 32 STU STDICT 256 STU 256 STU 256 STU STDICT ENDC
 		POPROOT
 		ACCEPT
 	}> PUSHCONT IFNOTJMP
+
+
+	// INTERNAL MESSAGE HANDLER
 
 	DUP <{
 		// ignore bounced messages
@@ -138,7 +154,7 @@
 		// ignore messages not sent by contract itself
 		LDMSGADDR DROP MYADDR SDEQ IFNOTRET
 
-		// simple transfer if no op field or it is zero
+		// simple transfer (sent to self) if no op field or it is zero
 		OVER 32 LDUQ IFNOTRET OVER ISZERO IFRET
 
 		OVER OP_REPLACE_KEY INT EQUAL <{
@@ -146,14 +162,14 @@
 
 			s6 PUSH 256 LDU 256 LDU ENDS
 
-			// s7  seqno
-			// s6  last_msg
+			// s7  stored_seqno
+			// s6  last_request
 			// s5  last_key
 			// s4  third_key
 			// s3  prev_key
-			// s2  prev_msg
-			// s1  intmsg_old_key
-			// s0  intmsg_new_key
+			// s2  prev_request
+			// s1  old_key
+			// s0  new_key
 
 			s0 s3 PUSH2 EQUAL ERR_KEY_EXISTS THROWIF
 			s0 s4 PUSH2 EQUAL ERR_KEY_EXISTS THROWIF
@@ -174,33 +190,148 @@
 		ERR_OP_UNKNOWN THROW
 	}> PUSHCONT IFNOTJMP
 
+
+	// METHODS
+
+	// seqno(): (seqno: u32)
 	DUP FN_SEQNO INT EQUAL <{
+		DROP
 		PUSHROOT CTOS 32 PLDU
-		2 0 REVERSE 1 BLKDROP
 	}> PUSHCONT IFJMP
 
-	DUP FN_LASTMSG INT EQUAL <{
-		PUSHROOT CTOS 32 LDU PLDDICT
-		3 0 REVERSE 2 BLKDROP
+	// three keys sorted
+	// keys(): (key1: u256, key2: u256, key3: u256)
+	DUP FN_KEYS INT EQUAL <{
+		DROP
+		PUSHROOT CTOS 32 1 + INT SDSKIPFIRST 256 LDU 256 LDU 256 PLDU
+		2DUP LEQ <{ SWAP }> PUSHCONT IF ROT
+		2DUP LEQ <{ SWAP }> PUSHCONT IF ROTREV
+		2DUP GEQ <{ SWAP }> PUSHCONT IF
 	}> PUSHCONT IFJMP
 
-	DUP FN_LASTKEY INT EQUAL <{
-		PUSHROOT CTOS 32 LDU LDDICT 256 PLDU
-		4 0 REVERSE 3 BLKDROP
+	// last request that was made
+	// last_request(): (request: cell | null)
+	DUP FN_LAST_REQUEST INT EQUAL <{
+		DROP
+		PUSHROOT CTOS 32 INT SDSKIPFIRST PLDDICT
 	}> PUSHCONT IFJMP
 
-	DUP FN_THIRDKEY INT EQUAL <{
-		PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 PLDU
-		5 0 REVERSE 4 BLKDROP
+	// key that made last request
+	// last_request_key(): (key: u256 | null)
+	DUP FN_LAST_REQUEST_KEY INT EQUAL <{
+		DROP
+		FN_LAST_REQUEST CALLFN ISNULL <{ NULL }> PUSHCONT IFJMP
+		PUSHROOT CTOS 32 1 + INT SDSKIPFIRST 256 PLDU
 	}> PUSHCONT IFJMP
 
-	DUP FN_PREVKEY INT EQUAL <{
-		PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 PLDU
+	// prev request (one that was made before last)
+	// prev_request(): (request: cell | null)
+	DUP FN_PREV_REQUEST INT EQUAL <{
+		DROP
+		PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
 		6 0 REVERSE 5 BLKDROP
 	}> PUSHCONT IFJMP
 
-	DUP FN_PREVMSG INT EQUAL <{
-		PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
-		7 0 REVERSE 6 BLKDROP
+	// key that made prev request
+	// prev_request_key(): (key: u256 | null)
+	DUP FN_PREV_REQUEST_KEY INT EQUAL <{
+		DROP
+		FN_PREV_REQUEST CALLFN ISNULL <{ NULL }> PUSHCONT IFJMP
+		PUSHROOT CTOS 32 1 256 256 + + + INT SDSKIPFIRST 256 PLDU
 	}> PUSHCONT IFJMP
+
+	// request made by key
+	// my_request(my_key: u256): (my_request: cell | null)
+	DUP FN_MY_REQUEST INT EQUAL <{
+		DROP
+
+		FN_LAST_REQUEST CALLFN ISNULL <{
+			DROP NULL
+		}> PUSHCONT IFJMP
+
+		DUP FN_LAST_REQUEST_KEY CALLFN EQUAL <{
+			DROP FN_LAST_REQUEST CALLFN
+		}> PUSHCONT IFJMP
+
+		FN_PREV_REQUEST CALLFN ISNULL <{
+			DROP NULL
+		}> PUSHCONT IFJMP
+
+		DUP FN_PREV_REQUEST_KEY CALLFN EQUAL <{
+			DROP FN_PREV_REQUEST CALLFN
+		}> PUSHCONT IFJMP
+
+		DROP NULL
+	}> PUSHCONT IFJMP
+
+	// request made by other key
+	// other_request1(my_key: u256): (request: cell | null)
+	DUP FN_OTHER_REQUEST1 INT EQUAL <{
+		DROP
+
+		DUP FN_MY_REQUEST CALLFN ISNULL <{
+			DROP
+			FN_PREV_REQUEST CALLFN ISNULL <{
+				FN_LAST_REQUEST CALLFN
+			}> PUSHCONT <{
+				FN_PREV_REQUEST CALLFN
+			}> PUSHCONT IFELSE
+		}> PUSHCONT IFJMP
+
+		FN_LAST_REQUEST_KEY CALLFN EQUAL <{
+			FN_PREV_REQUEST CALLFN
+		}> PUSHCONT <{
+			FN_LAST_REQUEST CALLFN
+		}> PUSHCONT IFELSE
+	}> PUSHCONT IFJMP
+
+	// key that made other request
+	// other_request1_key(my_key: u256): (key: u256 | null)
+	DUP FN_OTHER_REQUEST1_KEY INT EQUAL <{
+		DROP
+
+		DUP FN_OTHER_REQUEST1 CALLFN ISNULL <{
+			DROP NULL
+		}> PUSHCONT IFJMP
+
+		FN_OTHER_REQUEST1 CALLFN HASHCU FN_LAST_REQUEST CALLFN HASHCU EQUAL <{
+			FN_LAST_REQUEST_KEY CALLFN
+		}> PUSHCONT <{
+			FN_PREV_REQUEST_KEY CALLFN
+		}> PUSHCONT IFELSE
+	}> PUSHCONT IFJMP
+
+	// later request made by other key
+	// other_request2(my_key: u256): (request: cell | null)
+	DUP FN_OTHER_REQUEST2 INT EQUAL <{
+		DROP
+
+		FN_MY_REQUEST CALLFN ISNULL NOT <{
+			NULL
+		}> PUSHCONT IFJMP
+
+		FN_PREV_REQUEST CALLFN ISNULL <{
+			NULL
+		}> PUSHCONT <{
+			FN_LAST_REQUEST CALLFN
+		}> PUSHCONT IFELSE
+	}> PUSHCONT IFJMP
+
+	// key that made later other request
+	// other_request2_key(my_key: u256): (key: u256 | null)
+	DUP FN_OTHER_REQUEST2_KEY INT EQUAL <{
+		DROP
+
+		FN_MY_REQUEST CALLFN ISNULL NOT <{
+			NULL
+		}> PUSHCONT IFJMP
+
+		FN_PREV_REQUEST CALLFN ISNULL <{
+			NULL
+		}> PUSHCONT <{
+			FN_LAST_REQUEST_KEY CALLFN
+		}> PUSHCONT IFELSE
+	}> PUSHCONT IFJMP
+
+	ERR_FN_UNKNOWN THROW
 }>c

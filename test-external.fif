@@ -1,0 +1,154 @@
+#!/bin/env -S fift -s
+
+"Asm.fif" include
+"TonUtil.fif" include
+"lib.fif" include
+"code.fif" include constant code
+
+<b b{100} s, 0 0x0000111100001111000011110000111100001111000011110000111100001111 addr, b> <s
+constant contract_address_slice
+
+{                                                                                // cell, private_key
+	<b 1 32 u, now 30 + 32 u, rot ref, b>                                          // private_key, payload
+	<b contract_address_slice s, over <s s, b> hashu                               // private_key, payload, signed_hash
+	rot ed25519_sign_uint                                                          // payload, signature
+	<b swap B, swap <s s, b> <s
+} : msgext-slice
+
+newkeypair constant key1pub constant key1priv
+newkeypair constant key2pub constant key2priv
+newkeypair constant key3pub constant key3priv
+
+<b
+	1 32 u,
+	null nullref,
+	key2pub B,
+	key3pub B,
+	key1pub B,
+	null nullref,
+b> constant data
+
+<b 1 8 u, b> constant msg1
+<b 2 8 u, b> constant msg2
+<b 3 8 u, b> constant msg3
+<b b>        constant cncl
+
+|
+"KEY1_MSG1" msg1 key1priv msgext-slice pair ,
+"KEY1_MSG2" msg2 key1priv msgext-slice pair ,
+"KEY1_MSG3" msg3 key1priv msgext-slice pair ,
+"KEY1_CNCL" cncl key1priv msgext-slice pair ,
+"KEY2_MSG1" msg1 key2priv msgext-slice pair ,
+"KEY2_MSG2" msg2 key2priv msgext-slice pair ,
+"KEY2_MSG3" msg3 key2priv msgext-slice pair ,
+"KEY2_CNCL" cncl key2priv msgext-slice pair ,
+"KEY3_MSG1" msg1 key3priv msgext-slice pair ,
+"KEY3_MSG2" msg2 key3priv msgext-slice pair ,
+"KEY3_MSG3" msg3 key3priv msgext-slice pair ,
+"KEY3_CNCL" cncl key3priv msgext-slice pair ,
+constant all_msgs
+
+{ over $len - "" swap { " " $+ } swap 0 max times swap $+ } : pad-left
+{ over $len - "" swap { " " $+ } swap 0 max times $+ } : pad-right
+
+{
+	dup null? { ."    " } {
+		dup hashu msg1 hashu = { ."MSG1" } if
+		dup hashu msg2 hashu = { ."MSG2" } if
+		dup hashu msg3 hashu = { ."MSG3" } if
+		dup hashu cncl hashu = { ."CNCL" } if
+	} cond
+	drop
+} : .msg
+
+{
+	dup key1pub B= { ."KEY1" } if
+	dup key2pub B= { ."KEY2" } if
+	dup key3pub B= { ."KEY3" } if
+	drop
+} : .key
+
+{                                                                                // c5
+	<s dup empty? not {                                                            // c5_slice
+		ref@+ swap 32 u@+ swap                                                       // c5_next, c5_slice', action
+		0x0EC3C86D = { ref@+ .msg } if                                               // c5_next, c5_slice'
+		swap                                                                         // c5_slice, c5_next
+		@' .c5msg
+	} if
+	drop
+} : .c5msg
+
+{
+	<{
+		<{ code CALLREF 0 INT }> PUSHCONT
+		<{ NIP }> PUSHCONT
+		2 1 TRYARGS
+		c5 PUSH
+	}>s
+} : c5code
+
+{
+	| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , contract_address_slice , 1 tuple
+} : c7
+
+{                                                                                // depth, gas_total, c4, msgs
+	0 {                                                                            // depth, gas_total, c4, msgs, i
+		1 pick 1 pick [] unpair -1
+		c5code
+		6 pick
+		c7
+		10000
+		gasrunvmctx
+		rot drop
+		240 -
+
+		// 9 depth
+		// 8 gas_total
+		// 7 c4
+		// 6 msgs
+		// 5 i
+		// 4 msg_name
+		// 3 err
+		// 2 c5
+		// 1 c4_next
+		// 0 gas_consumed
+
+		3 pick 0 = {
+			0 pick 9 pick + (.) 5 pad-right type
+			."  "
+			0 pick (.) 4 pad-left type
+
+			9 pick { ."  " } swap times
+			9 pick 0 = { ."  " } { ."- " } cond
+			4 pick type
+			9 pick { ."  " } swap 3 swap - times
+			."  "
+			1 pick seqno (.) type
+			."  "
+			1 pick key1pub swap my_request .msg ." "
+			1 pick key2pub swap my_request .msg ." "
+			1 pick key3pub swap my_request .msg
+			."  "
+			2 pick .c5msg
+			cr
+
+			9 pick 1 +
+			9 pick 2 pick +
+			3 pick
+			all_msgs
+			@' test-iter
+		} if
+
+		{ drop } 5 times                                                             // depth, gas_total, c4, msgs, i
+		1 +                                                                          // depth, gas_total, c4, msgs, i'
+	} 2 pick count times
+
+	{ drop } 5 times
+} : test-iter
+
+
+."TOTAL  GAS   MSG              N  KEY1 KEY2 KEY3  SENT" cr
+."=====================================================" cr
+0 0 data all_msgs test-iter
+."=====================================================" cr
+

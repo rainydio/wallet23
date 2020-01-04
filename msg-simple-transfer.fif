@@ -1,0 +1,88 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+"../lib.fif" include
+
+$# 0 = {
+	."fift -s " $0 type ." <private key file> <destination address> <amount> <comment>" cr
+	."  create new simple transfer request to send <amount> with <comment> to <destination address>" cr
+	."  signed by private key stored in <private key file>" cr
+	."  contract data cell has to be downloaded from blockchain first" cr
+	cr
+	."files:" cr
+	."  contract-address.addr - contract address input" cr
+	."  contract-data.boc - contract data cell input" cr
+	."  msg-simple-transfer.boc - external message output" cr
+
+	100 halt
+} if
+
+
+{
+	2dup <s s-fits? {
+		swap false 1 u, swap <s s,
+	} {
+		swap true 1 u, swap ref,
+	} cond
+} : body,
+
+$1 load-keypair nip
+constant private_key
+
+$2 false parse-load-address
+constant bounce
+2constant destination_address
+
+$3 $>GR
+constant amount
+
+$4
+constant comment
+
+"contract-address.addr" load-address
+2constant contract_address
+
+"contract-data.boc" file>B B>boc
+constant contract_data
+
+now 60 +
+constant valid_until
+
+<b
+	b{01} s,
+	bounce 1 i, b{000} s,
+	b{100} s, destination_address addr,
+	amount Gram,
+	0 106 u,
+	comment simple-transfer-body body,
+b> constant out_msg
+
+<b
+	contract_data seqno 32 u,
+	valid_until 32 u,
+	out_msg ref,
+b> constant payload
+
+<b
+	b{100} s,
+	contract_address addr,
+	payload <s s,
+b> hashu constant signed_hash
+
+signed_hash private_key ed25519_sign_uint
+constant signature
+
+<b
+	signature B,
+	payload <s s,
+b> constant body
+
+<b
+	b{1000100} s,
+	contract_address addr,
+	0 Gram,
+	b{00} s,
+	body <s s,
+b> constant msg_simple_transfer
+
+msg_simple_transfer 2 boc+>B dup "msg-simple-transfer.boc" B>file

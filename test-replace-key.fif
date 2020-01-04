@@ -1,0 +1,44 @@
+"TonUtil.fif" include
+"lib.fif" include
+"code.fif" include <s constant code_slice
+
+<b b{100} s, 0 0x0000111100001111000011110000111100001111000011110000111100001111 addr, b> <s
+constant contract_address_slice
+
+newkeypair nip constant public_key1
+newkeypair nip constant public_key2
+newkeypair nip constant public_key3
+
+public_key1    constant old_public_key
+newkeypair nip constant new_public_key
+
+<b
+	1 32 u,
+	null nullref,
+	public_key1 B,
+	public_key2 B,
+	public_key3 B,
+	null nullref,
+b> constant data
+
+<b
+	1 32 u,
+	old_public_key B,
+	new_public_key B,
+b> constant intmsg_body
+
+<b
+	false 1 i, b{000} s,
+	contract_address_slice s,
+	1000000 Gram,
+	0 106 u,
+	intmsg_body body,
+b> constant intmsg
+
+| 0 , 1 , 2 , now , 4 , 5 , 6 , 7 , contract_address_slice , 1 tuple
+constant c7
+
+intmsg intmsg_body <s 0 code_slice data c7 runvmctx
+<s 32 u@+ nip nullref@+ nip 32 B@
+new_public_key B= not abort"replace key failed"
+{ drop } depth 1 - times

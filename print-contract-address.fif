@@ -1,0 +1,10 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+
+"contract-address.addr" load-address
+2constant contract_address
+
+contract_address .addr cr
+contract_address 6 smca>$ type cr
+contract_address 7 smca>$ type cr

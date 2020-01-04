@@ -1,5 +1,7 @@
 # 2/3 wallet
 
+[Original Telegram contest submission]
+
 2/3 multisig wallet contract with signature collection performed on-chain intended to serve single person. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost and is controlled by attacker.
 
 ## State transitions
@@ -162,6 +164,4 @@ valid_until 32 u,
 out_msg ref,
 ```
 
-[wallet-new.fif]: https://github.com/rainydio/wallet23/blob/master/wallet-new.fif
-[test-report.fif]: https://github.com/rainydio/wallet23/blob/master/test-report.fif
-[test-report.txt]: https://github.com/rainydio/wallet23/blob/master/test-report.txt
+[original telegram contest submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
