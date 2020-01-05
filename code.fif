@@ -21,7 +21,6 @@
 38 constant ERR_KEY_EXISTS
 39 constant ERR_KEY_NOT_FOUND
 40 constant ERR_OP_UNKNOWN
-41 constant ERR_FN_UNKNOWN
 
 // similar to CALLDICT for integeres higher than 256
 {
