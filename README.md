@@ -87,7 +87,7 @@ Several methods that query data cell are implemented:
 - `prev_request -> request(cell | null)` request that was made before last.
 - `prev_request_key -> key(256 u | null)` key that made prev request.
 
-Additionally to provide perspective several methods accept single `my_key(256 u)` argument:
+Additionally several methods accept single `my_key(256 u)` argument:
 
 - `my_key(256 u) my_request -> my_request(cell | null)` request made by `my_key`.
 - `my_key(256 u) other_request1 -> request(cell | null)` earliest request made by other key.
