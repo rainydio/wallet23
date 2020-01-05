@@ -1,7 +1,7 @@
 #!/bin/env -S fift -s
 
 "TonUtil.fif" include
-"../lib.fif" include
+"lib.fif" include
 
 $# 0 = {
 	."fift -s " $0 type ." <private key file> <destination address> <amount> <comment>" cr

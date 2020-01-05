@@ -1,16 +1,14 @@
 #!/bin/bash
 
-if [[ $# -ne 1 ]]; then
-	>&2 echo "$0 <wallet directory>"
-	exit 100
+wallet_dir="$1"
+
+if [[ "$wallet_dir" == "" ]]; then
+	wallet_dir="mywallet"
 fi
 
-if [[ ! -d $1 ]]; then
-	mkdir $1
-fi
-
+mkdir -p "$wallet_dir"
 (
-	cd $1
+	cd "$wallet_dir"
 
 	if [[ ! -f ton-global.config ]]; then
 		wget https://test.ton.org/ton-lite-client-test1.config.json -O ton-global.config || exit 1
@@ -102,9 +100,8 @@ fi
 		echo ""
 
 		if [[ $my_request != "" ]]; then
-			echo "your request (waiting confirmation):"
+			echo "waiting confirmation:"
 			echo "  $my_request"
-			echo ""
 		fi
 
 		if [[ $other_request1 != "" ]]; then
@@ -117,15 +114,15 @@ fi
 		fi
 		if [[ $my_request == "" && ($other_request1 != "" || $other_request2 != "") ]]; then
 			echo "cancel"
-			echo "  send cancellation request"
+			echo "  cancellation request"
 		fi
 		if [[ $my_request == "" ]]; then
 			echo "transfer"
-			echo "  send new simple transfer request"
+			echo "  simple transfer request"
 		fi
 		if [[ $my_request == "" ]]; then
 			echo "replace-key"
-			echo "  replace public key"
+			echo "  replace public key request"
 		fi
 
 		echo ""
