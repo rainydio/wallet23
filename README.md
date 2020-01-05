@@ -105,7 +105,7 @@ Several example scripts are implemented. Many of them require contract data cell
 $ lite-client -c "last" -c "saveaccountdata contract-data.boc <address>"
 ```
 
-Usage information is only printed when called without arguments:
+Beware that usage information is only printed when called without arguments.
 
 - [`msg-init.fif`] new wallet.
 - [`msg-simple-transfer.fif`] new simple transfer request.
@@ -114,7 +114,7 @@ Usage information is only printed when called without arguments:
 - [`msg-replace-key.fif`] new request to replace one of the keys.
 - [`print-contract-data.fif`] prints information stored in data cell by leveraging get methods.
 
-Using them example [wallet.sh] script provides minimal wallet implementation.
+Using them example [wallet.sh] script provides minimal wallet implementation:
 
 ![wallet.sh.gif][wallet.sh.gif]
 
