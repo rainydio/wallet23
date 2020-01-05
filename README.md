@@ -114,7 +114,7 @@ Usage information is only printed when called without arguments:
 - [`msg-replace-key.fif`] new request to replace one of the keys.
 - [`print-contract-data.fif`] prints information stored in data cell by leveraging get methods.
 
-Example [wallet.sh] bash script is using these scripts providing minimal wallet implementation.
+Using them example [wallet.sh] script provides minimal wallet implementation.
 
 ![wallet.sh.gif][wallet.sh.gif]
 
