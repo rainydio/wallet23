@@ -1,6 +1,6 @@
 # 2/3 wallet
 
-[Original Telegram contest submission]
+[Original submission]
 
 2/3 multisig wallet contract with signature collection performed on-chain intended to serve single person. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost or controlled by attacker.
 
