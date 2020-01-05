@@ -74,4 +74,4 @@ b> constant body
 	body <s s,
 b> constant msg_replace_key
 
-msg_replace_key 2 boc+>B dup "msg-replace-key.boc" B>file
+msg_replace_key 2 boc+>B "msg-replace-key.boc" B>file

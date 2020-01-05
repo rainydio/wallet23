@@ -63,4 +63,4 @@ b> constant body
 	body <s s,
 b> constant msg_confirmation
 
-msg_confirmation 2 boc+>B dup "msg-confirmation.boc" B>file
+msg_confirmation 2 boc+>B "msg-confirmation.boc" B>file

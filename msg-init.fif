@@ -70,7 +70,7 @@ stateinit hashu
 b> constant msg_init
 
 contract_address "contract-address.addr" save-address-verbose
-msg_init 2 boc+>B dup "msg-init.boc" B>file
+msg_init 2 boc+>B "msg-init.boc" B>file
 
 cr
 ."address:        " contract_address .addr cr

@@ -65,4 +65,4 @@ b> constant body
 	body <s s,
 b> constant msg_cancellation
 
-msg_cancellation 2 boc+>B dup "msg-cancellation.boc" B>file
+msg_cancellation 2 boc+>B "msg-cancellation.boc" B>file

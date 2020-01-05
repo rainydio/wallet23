@@ -85,4 +85,4 @@ b> constant body
 	body <s s,
 b> constant msg_simple_transfer
 
-msg_simple_transfer 2 boc+>B dup "msg-simple-transfer.boc" B>file
+msg_simple_transfer 2 boc+>B "msg-simple-transfer.boc" B>file
