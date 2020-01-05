@@ -166,6 +166,7 @@ $ fift -s test.fif > test-report.txt && git difftool test-report.txt
 [`msg-confirmation.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-confirmation.fif
 [`msg-replace-key.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-replace-key.fif
 [`print-contract-data.fif`]: https://github.com/rainydio/wallet23/blob/master/print-contract-data.fif
+[msg-init.fif]: https://github.com/rainydio/wallet23/blob/master/msg-init.fif
 [wallet.sh]: https://github.com/rainydio/wallet23/blob/master/wallet.sh
 [wallet.sh.gif]: https://raw.githubusercontent.com/rainydio/wallet23/master/wallet.sh.gif
 [test-report.txt]: https://github.com/rainydio/wallet23/blob/master/test-report.txt
