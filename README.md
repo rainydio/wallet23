@@ -85,14 +85,14 @@ Several methods that query data cell are implemented:
 - `last_request -> request(cell | null)` last request that was made.
 - `last_request_key -> key(256 u | null)` key that made last request.
 - `prev_request -> request(cell | null)` request that was made before last.
-- `prev_request_key -> key(256 u | null)` key that made prev request.
+- `prev_request_key -> key(256 u | null)` key that made `prev_request`.
 
 Additionally several methods accept single `my_key(256 u)` argument:
 
 - `my_key(256 u) my_request -> my_request(cell | null)` request made by `my_key`.
 - `my_key(256 u) other_request1 -> request(cell | null)` earliest request made by other key.
 - `my_key(256 u) other_request1_key -> key(256 u | null)` key that made `other_request1`.
-- `my_key(256 u) other_request2 -> request(cell | null)` request that was sent after `other_request1`.
+- `my_key(256 u) other_request2 -> request(cell | null)` request that was made after `other_request1`.
 - `my_key(256 u) other_request2_key -> key(256 u | null)` key that made `other_request2`.
 
 These methods can be called by lite-client runmethod command. Alternatively [lib.fif] contains fift implementations, but with key being bytes instead of integer.
