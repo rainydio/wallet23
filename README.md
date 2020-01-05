@@ -159,7 +159,7 @@ To generate report and compare it to previously committed:
 $ fift -s test.fif > test-report.txt && git difftool test-report.txt
 ```
 
-[original telegram contest submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
+[original submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
 [`msg-init.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-init.fif
 [`msg-simple-transfer.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-simple-transfer.fif
 [`msg-cancellation.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-cancellation.fif
