@@ -74,7 +74,7 @@ Honesty and procedures used by confirmation service can be tested. User is vulne
 
 ## Technicalities
 
-Contract code located in [contract.fif] is small, but relatively sophisticated and is written in ASM. Notably position of request and key that made it within data cell depends on how recently it was used (last, prev, third).
+Contract code located in [contract.fif] is small, but relatively sophisticated and is written in ASM.
 
 ### Methods
 
