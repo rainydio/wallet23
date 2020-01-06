@@ -77,6 +77,8 @@
 				// if failed flipping to second most likely used last_key
 				5 0 REVERSE
 				s9 s10 s1 PUSH3 CHKSIGNU IFRET
+				// code below is complex and inefficient, but executed rarely
+				// trading its performance for simplicity of the hot path
 
 				// if failed too it must be third_key
 				s9 s10 s2 PUSH3 CHKSIGNU ERR_SIG THROWIFNOT
@@ -186,14 +188,14 @@
 
 	// METHODS
 
-	// seqno -> seqno(32 u)
+	// seqno ( -> seqno: 32u)
 	DUP FN_SEQNO INT EQUAL <{
 		DROP
 		PUSHROOT CTOS 32 PLDU
 	}> PUSHCONT IFJMP
 
 	// three keys in ascending order
-	// keys -> key1(256 u), key2(256 u), key3(256 u)
+	// keys ( -> key1: 256u, key2: 256u, key3: 256u)
 	DUP FN_KEYS INT EQUAL <{
 		DROP
 		PUSHROOT CTOS 32 1 + INT SDSKIPFIRST 256 LDU 256 LDU 256 PLDU
@@ -203,14 +205,14 @@
 	}> PUSHCONT IFJMP
 
 	// last request that was made
-	// last_request -> request(cell | null)
+	// last_request ( -> request: cell|null)
 	DUP FN_LAST_REQUEST INT EQUAL <{
 		DROP
 		PUSHROOT CTOS 32 INT SDSKIPFIRST PLDDICT
 	}> PUSHCONT IFJMP
 
 	// key that made last request
-	// last_request_key -> key(256 u | null)
+	// last_request_key ( -> key: 256u|null)
 	DUP FN_LAST_REQUEST_KEY INT EQUAL <{
 		DROP
 		FN_LAST_REQUEST CALLDICT ISNULL <{ NULL }> PUSHCONT IFJMP
@@ -218,7 +220,7 @@
 	}> PUSHCONT IFJMP
 
 	// request that was made before last
-	// prev_request -> request(cell | null)
+	// prev_request ( -> request: cell|null)
 	DUP FN_PREV_REQUEST INT EQUAL <{
 		DROP
 		PUSHROOT CTOS 32 LDU LDDICT 256 LDU 256 LDU 256 LDU PLDDICT
@@ -226,7 +228,7 @@
 	}> PUSHCONT IFJMP
 
 	// key that made prev_request
-	// prev_request_key -> key(256 u | null)
+	// prev_request_key ( -> key: 256u|null)
 	DUP FN_PREV_REQUEST_KEY INT EQUAL <{
 		DROP
 		FN_PREV_REQUEST CALLDICT ISNULL <{ NULL }> PUSHCONT IFJMP
@@ -234,7 +236,7 @@
 	}> PUSHCONT IFJMP
 
 	// request made by my_key
-	// my_key(256 u) my_request -> my_request(cell | null)
+	// my_request (my_key: 256u -> my_request: cell|null)
 	DUP FN_MY_REQUEST INT EQUAL <{
 		DROP
 
@@ -258,7 +260,7 @@
 	}> PUSHCONT IFJMP
 
 	// earliest request made by other key
-	// my_key(256 u) other_request1 -> request(cell | null)
+	// other_request1 (my_key: 256u -> request: cell|null)
 	DUP FN_OTHER_REQUEST1 INT EQUAL <{
 		DROP
 
@@ -279,7 +281,7 @@
 	}> PUSHCONT IFJMP
 
 	// key that made other_request1
-	// my_key(256 u) other_request1_key -> key(256 u | null)
+	// other_request1_key (my_key: 256u -> key: 256u|null)
 	DUP FN_OTHER_REQUEST1_KEY INT EQUAL <{
 		DROP
 
@@ -295,7 +297,7 @@
 	}> PUSHCONT IFJMP
 
 	// request that was made after other_request1
-	// my_key(256 u) other_request2 -> request(cell | null)
+	// other_request2 (my_key: 256u -> request: cell|null)
 	DUP FN_OTHER_REQUEST2 INT EQUAL <{
 		DROP
 
@@ -311,7 +313,7 @@
 	}> PUSHCONT IFJMP
 
 	// key that made other_request2
-	// my_key(256 u) other_request2_key -> key(256 u | null)
+	// other_request2_key (my_key: 256u -> key: 256u|null)
 	DUP FN_OTHER_REQUEST2_KEY INT EQUAL <{
 		DROP
 

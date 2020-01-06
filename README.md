@@ -2,21 +2,21 @@
 
 [Original submission]
 
-2/3 multisig wallet contract with signature collection performed on-chain intended to serve single person. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with assumption that one of the keys is lost or controlled by attacker.
+2/3 multisig wallet contract with signature collection performed on-chain intended to serve single person. Although all three keys have equal permissions, contract is optimized for two keys sending external messages in turns. It is made with the assumption that one of the keys is lost or controlled by attacker.
 
 ## State transitions
 
 Unconventionally contract's seqno is not incremented after every external message, instead it represents a single round of collecting signatures. There are three rules within it:
 
-1. Each key is allowed to create only one request for confirmation, aftewards it can only send confirmations.
+1. Each key is allowed to create only one request for confirmation, afterwards it can only send confirmations.
 1. Once confirmation is received requested action is executed, seqno incremented and next request can be sent.
 1. If all three keys send different requests, nothing is executed, seqno incremented and next request can be sent.
 
-Because there are three keys, chances of one of them being stolen are higher then if there was only one. However damage is limited only to gas consumed creating single request.
+Because there are three keys, chances of one of them being stolen are higher than if there was only one. However damage is limited only to gas consumed creating single request.
 
 ### Request / confirmation
 
-The most optimized transition path involves sending two external messages signed by two different keys. First creating request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Both external messages to be sent simultaneously, because seqno is not incremented until next round.
+The most optimized transition path involves sending two external messages signed by two different keys. First creating request followed by confirmation from another key. The distinction between request and confirmation is only in which external message is processed first. Both external messages can be sent simultaneously, because seqno is not incremented until the next round.
 
 ### Request / cancellation / cancellation confirmation
 
@@ -52,7 +52,7 @@ Single person performing confirmations from secondary device is very similar to 
 - Confirmation key is stored on mobile phone by confirmation software.
 - Backup key is stored in sealed paper bag somewhere safe.
 
-Similiraly to MFA wide scale attacks such as malware scanning for private keys are ineffective. Backup key can be used to restore access in case one of devices is lost. Compared to hardware wallet backup key on its own doesn't provide access to funds. Security requirements for storing it are significantly lower. It can be given to friend or family member.
+Similarly to MFA wide scale attacks such as malware scanning for private keys are ineffective. Backup key can be used to restore access in case one of the devices is lost. Compared to hardware wallet backup key on its own doesn't provide access to funds. Security requirements for storing it are significantly lower. It can be given to a friend or family member.
 
 ### Server performing confirmations
 
@@ -70,7 +70,7 @@ Similarly to traditional banks they may choose to contact user by phone to get c
 - Requests made by backup key.
 - Requests to replace wallet key.
 
-Honesty and procedures used by confirmation service can be tested. User is vulnarable if he looses either of two other keys. But there is no way for confirmation service to know if user actually lost one or is he performing a test.
+Honesty and procedures used by confirmation service can be tested. User is vulnerable if he loses either of two other keys. But there is no way for confirmation service to know if user actually lost one or is he performing a test.
 
 ## Technicalities
 
@@ -80,20 +80,20 @@ It is small, but relatively sophisticated contract written in ASM. Notably posit
 
 Several methods that query data cell are implemented:
 
-- `seqno -> seqno(32 u)`
-- `keys -> key1(256 u), key2(256 u), key3(256 u)` three keys in ascending order.
-- `last_request -> request(cell | null)` last request that was made.
-- `last_request_key -> key(256 u | null)` key that made last request.
-- `prev_request -> request(cell | null)` request that was made before last.
-- `prev_request_key -> key(256 u | null)` key that made `prev_request`.
+- `seqno ( -> seqno: 32u)`
+- `keys ( -> key1: 256u, key2: 256u, key3: 256u)` three keys in ascending order.
+- `last_request ( -> request: cell|null)` last request that was made.
+- `last_request_key ( -> key: 256u|null)` key that made last request.
+- `prev_request ( -> request: cell|null)` request that was made before last.
+- `prev_request_key ( -> key: 256u|null)` key that made `prev_request`.
 
-Additionally several methods accept single `my_key(256 u)` argument:
+Additionally several methods accept single `my_key: 256u` argument:
 
-- `my_key(256 u) my_request -> my_request(cell | null)` request made by `my_key`.
-- `my_key(256 u) other_request1 -> request(cell | null)` earliest request made by other key.
-- `my_key(256 u) other_request1_key -> key(256 u | null)` key that made `other_request1`.
-- `my_key(256 u) other_request2 -> request(cell | null)` request that was made after `other_request1`.
-- `my_key(256 u) other_request2_key -> key(256 u | null)` key that made `other_request2`.
+- `my_request (my_key: 256u -> my_request: cell|null)` request made by `my_key`.
+- `other_request1 (my_key: 256u -> request: cell|null)` earliest request made by other key.
+- `other_request1_key (my_key: 256u -> key: 256u|null)` key that made `other_request1`.
+- `other_request2 (my_key: 256u -> request: cell|null)` request that was made after `other_request1`.
+- `other_request2_key (my_key: 256u -> key: 256u|null)` key that made `other_request2`.
 
 These methods can be called by lite-client runmethod command. Alternatively [lib.fif] contains fift implementations, but with key being bytes instead of integer.
 
@@ -126,9 +126,9 @@ Contract code does not contain special initialization checks (if seqno is zero).
 0 constant nonce
 
 <{
-  SETCP0 ACCEPT
-  nonce INT
-  "code.fif" include PUSHREF SETCODE
+ SETCP0 ACCEPT
+ nonce INT
+ "code.fif" include PUSHREF SETCODE
 }>c
 ```
 
@@ -136,7 +136,7 @@ Additional nonce constant can be tweaked to choose preferred address (e.g. conta
 
 ### Signing contract address
 
-Hash that is signed is required to include contract address. As result external message cannot be replayed from or to a different contract (or same contract in different workchain) that is using same public key and similar payload structure.
+Hash that is signed is required to include contract address. As a result external message cannot be replayed from or to a different contract (or same contract in different workchain) that is using the same public key and similar payload structure.
 
 ### Tests
 
