@@ -1,4 +1,3 @@
 .vscode/
 .envrc
-mywallet/*
-mywallet*/*
+mywallet/
