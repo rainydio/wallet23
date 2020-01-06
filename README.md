@@ -74,7 +74,7 @@ Honesty and procedures used by confirmation service can be tested. User is vulne
 
 ## Technicalities
 
-It is small, but relatively sophisticated contract written in ASM. Notably position of request and key that made it within data cell depends on how recently it was used (last, prev, third).
+Contract code located in [contract.fif] is small, but relatively sophisticated and is written in ASM. Notably position of request and key that made it within data cell depends on how recently it was used (last, prev, third).
 
 ### Methods
 
@@ -107,12 +107,12 @@ $ lite-client -c "last" -c "saveaccountdata contract-data.boc <address>"
 
 Beware that usage information is only printed when called without arguments.
 
-- [`msg-init.fif`] new wallet.
-- [`msg-simple-transfer.fif`] new simple transfer request.
-- [`msg-cancellation.fif`] new cancellation request.
-- [`msg-confirmation.fif`] confirmation.
-- [`msg-replace-key.fif`] new request to replace one of the keys.
-- [`print-contract-data.fif`] prints information stored in data cell by leveraging get methods.
+- [msg-init.fif] new wallet.
+- [msg-simple-transfer.fif] new simple transfer request.
+- [msg-cancellation.fif] new cancellation request.
+- [msg-confirmation.fif] confirmation.
+- [msg-replace-key.fif] new request to replace one of the keys.
+- [print-contract-data.fif] prints information stored in data cell by leveraging get methods.
 
 Using them example [wallet.sh] script provides minimal wallet implementation:
 
@@ -128,7 +128,7 @@ Contract code does not contain special initialization checks (if seqno is zero).
 <{
  SETCP0 ACCEPT
  nonce INT
- "code.fif" include PUSHREF SETCODE
+ "contract.fif" include PUSHREF SETCODE
 }>c
 ```
 
@@ -160,14 +160,14 @@ $ fift -s test.fif > test-report.txt && git difftool test-report.txt
 ```
 
 [original submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
-[`msg-init.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-init.fif
-[`msg-simple-transfer.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-simple-transfer.fif
-[`msg-cancellation.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-cancellation.fif
-[`msg-confirmation.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-confirmation.fif
-[`msg-replace-key.fif`]: https://github.com/rainydio/wallet23/blob/master/msg-replace-key.fif
-[`print-contract-data.fif`]: https://github.com/rainydio/wallet23/blob/master/print-contract-data.fif
+[contract.fif]: https://github.com/rainydio/wallet23/blob/master/contract.fif
 [lib.fif]: https://github.com/rainydio/wallet23/blob/master/lib.fif
 [msg-init.fif]: https://github.com/rainydio/wallet23/blob/master/msg-init.fif
+[msg-simple-transfer.fif]: https://github.com/rainydio/wallet23/blob/master/msg-simple-transfer.fif
+[msg-cancellation.fif]: https://github.com/rainydio/wallet23/blob/master/msg-cancellation.fif
+[msg-confirmation.fif]: https://github.com/rainydio/wallet23/blob/master/msg-confirmation.fif
+[msg-replace-key.fif]: https://github.com/rainydio/wallet23/blob/master/msg-replace-key.fif
+[print-contract-data.fif]: https://github.com/rainydio/wallet23/blob/master/print-contract-data.fif
 [wallet.sh]: https://github.com/rainydio/wallet23/blob/master/wallet.sh
 [wallet.sh.gif]: https://raw.githubusercontent.com/rainydio/wallet23/master/wallet.sh.gif
 [test-report.txt]: https://github.com/rainydio/wallet23/blob/master/test-report.txt

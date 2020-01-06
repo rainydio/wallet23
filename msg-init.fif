@@ -38,7 +38,7 @@ constant key3_pub
 <{
 	SETCP0 ACCEPT
 	nonce INT
-	"code.fif" include PUSHREF SETCODE
+	"contract.fif" include PUSHREF SETCODE
 }>c constant envelope
 
 <b

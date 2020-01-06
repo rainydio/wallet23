@@ -1,6 +1,6 @@
 "TonUtil.fif" include
 "lib.fif" include
-"code.fif" include <s constant code_slice
+"contract.fif" include <s constant code_slice
 
 <b b{100} s, 0 0x0000111100001111000011110000111100001111000011110000111100001111 addr, b> <s
 constant contract_address_slice

@@ -1,5 +1,5 @@
 "lib.fif" include
-"code.fif" include <s constant code_slice
+"contract.fif" include <s constant code_slice
 
 <b 1 8 u, b> constant req1
 <b 2 8 u, b> constant req2
