@@ -1,3 +1,5 @@
+#!/bin/env -S fift -s
+
 "lib.fif" include
 "contract.fif" include <s constant code_slice
 

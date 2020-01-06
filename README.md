@@ -99,22 +99,22 @@ These methods can be called by lite-client runmethod command. Alternatively [lib
 
 ### Examples
 
-Several example scripts are implemented. Many of them require contract data cell to be downloaded first:
-
-```sh
-$ lite-client -c "last" -c "saveaccountdata contract-data.boc <address>"
-```
-
-Beware that usage information is only printed when called without arguments.
+Several example scripts are implemented.
 
 - [msg-init.fif] new wallet.
 - [msg-simple-transfer.fif] new simple transfer request.
 - [msg-cancellation.fif] new cancellation request.
 - [msg-confirmation.fif] confirmation.
 - [msg-replace-key.fif] new request to replace one of the keys.
-- [print-contract-data.fif] prints information stored in data cell by leveraging get methods.
+- [print-contract-data.fif] prints information stored in data cell.
 
-Using them example [wallet.sh] script provides minimal wallet implementation:
+Beware that usage information is printed only when called without arguments. Many of them also require contract data cell to be downloaded first:
+
+```sh
+$ lite-client -c "last" -c "saveaccountdata contract-data.boc <address>"
+```
+
+Using them example [wallet.sh] bash script provides simple wallet console application:
 
 ![wallet.sh.gif][wallet.sh.gif]
 
