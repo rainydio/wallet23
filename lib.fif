@@ -2,6 +2,10 @@
 "TonUtil.fif" include
 
 {
+	$>B crc16 0x10000 or
+} : $>id
+
+{
 	dict,
 } : nullref,
 

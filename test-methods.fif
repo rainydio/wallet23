@@ -10,7 +10,7 @@ newkeypair nip 256 B>u@ constant key1
 newkeypair nip 256 B>u@ constant key2
 newkeypair nip 256 B>u@ constant key3
 
-FN_SEQNO code_slice <b
+"seqno" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -20,7 +20,7 @@ FN_SEQNO code_slice <b
 b> runvm drop 0 <> abort"error"
 100 <> abort"seqno failure"
 
-FN_KEYS code_slice <b
+"keys" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -32,7 +32,7 @@ b> runvm drop 0 <> abort"error"
 1 pick 1 pick > abort"keys failure"
 drop drop drop
 
-FN_LAST_REQUEST code_slice <b
+"last_request" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -42,7 +42,7 @@ FN_LAST_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"last_request failure"
 
-FN_LAST_REQUEST code_slice <b
+"last_request" $>id code_slice <b
 	100 32 u,
 	req1 nullref,
 	key1 256 u,
@@ -52,7 +52,7 @@ FN_LAST_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req1 hashu <> abort"last_request failure"
 
-FN_LAST_REQUEST_KEY code_slice <b
+"last_request_key" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -62,7 +62,7 @@ FN_LAST_REQUEST_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"last_request_key failure"
 
-FN_LAST_REQUEST_KEY code_slice <b
+"last_request_key" $>id code_slice <b
 	100 32 u,
 	req1 nullref,
 	key1 256 u,
@@ -72,7 +72,7 @@ FN_LAST_REQUEST_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key1 <> abort"last_request_key failure"
 
-FN_PREV_REQUEST code_slice <b
+"prev_request" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -82,7 +82,7 @@ FN_PREV_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"prev_request failure"
 
-FN_PREV_REQUEST code_slice <b
+"prev_request" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -92,7 +92,7 @@ FN_PREV_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req1 hashu <> abort"prev_request failure"
 
-FN_PREV_REQUEST_KEY code_slice <b
+"prev_request_key" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -102,7 +102,7 @@ FN_PREV_REQUEST_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"prev_request_key failure"
 
-FN_PREV_REQUEST_KEY code_slice <b
+"prev_request_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -112,8 +112,7 @@ FN_PREV_REQUEST_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key3 <> abort"prev_request_key failure"
 
-key1
-FN_MY_REQUEST code_slice <b
+key1 "my_request" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -123,8 +122,7 @@ FN_MY_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"my_request failure"
 
-key3
-FN_MY_REQUEST code_slice <b
+key3 "my_request" $>id code_slice <b
 	100 32 u,
 	null nullref,
 	key1 256 u,
@@ -134,8 +132,7 @@ FN_MY_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"my_request failure"
 
-key1
-FN_MY_REQUEST code_slice <b
+key1 "my_request" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -145,8 +142,7 @@ FN_MY_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req2 hashu <> abort"prev_request failure"
 
-key2
-FN_MY_REQUEST code_slice <b
+key2 "my_request" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -156,8 +152,7 @@ FN_MY_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"my_request failure"
 
-key3
-FN_MY_REQUEST code_slice <b
+key3 "my_request" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -167,8 +162,7 @@ FN_MY_REQUEST code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req1 hashu <> abort"my_request failure"
 
-key1
-FN_OTHER_REQUEST1 code_slice <b
+key1 "other_request1" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -178,8 +172,7 @@ FN_OTHER_REQUEST1 code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req1 hashu <> abort"other_request1 failure"
 
-key2
-FN_OTHER_REQUEST1 code_slice <b
+key2 "other_request1" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -189,8 +182,7 @@ FN_OTHER_REQUEST1 code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req1 hashu <> abort"other_request1 failure"
 
-key3
-FN_OTHER_REQUEST1 code_slice <b
+key3 "other_request1" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -200,8 +192,7 @@ FN_OTHER_REQUEST1 code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req2 hashu <> abort"other_request1 failure"
 
-key1
-FN_OTHER_REQUEST1_KEY code_slice <b
+key1 "other_request1_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -211,8 +202,7 @@ FN_OTHER_REQUEST1_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key3 <> abort"other_request1_key failure"
 
-key2
-FN_OTHER_REQUEST1_KEY code_slice <b
+key2 "other_request1_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -222,8 +212,7 @@ FN_OTHER_REQUEST1_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key3 <> abort"other_request1_key failure"
 
-key3
-FN_OTHER_REQUEST1_KEY code_slice <b
+key3 "other_request1_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -233,8 +222,7 @@ FN_OTHER_REQUEST1_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key1 <> abort"other_request1_key failure"
 
-key1
-FN_OTHER_REQUEST2 code_slice <b
+key1 "other_request2" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -244,8 +232,7 @@ FN_OTHER_REQUEST2 code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"other_request2 failure"
 
-key2
-FN_OTHER_REQUEST2 code_slice <b
+key2 "other_request2" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -255,8 +242,7 @@ FN_OTHER_REQUEST2 code_slice <b
 b> runvm drop 0 <> abort"error"
 hashu req2 hashu <> abort"other_request2 failure"
 
-key3
-FN_OTHER_REQUEST2 code_slice <b
+key3 "other_request2" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -266,8 +252,7 @@ FN_OTHER_REQUEST2 code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"other_request2 failure"
 
-key1
-FN_OTHER_REQUEST2_KEY code_slice <b
+key1 "other_request2_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -277,8 +262,7 @@ FN_OTHER_REQUEST2_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 null? not abort"other_request2_key failure"
 
-key2
-FN_OTHER_REQUEST2_KEY code_slice <b
+key2 "other_request2_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
@@ -288,8 +272,7 @@ FN_OTHER_REQUEST2_KEY code_slice <b
 b> runvm drop 0 <> abort"error"
 key1 <> abort"other_request2_key failure"
 
-key3
-FN_OTHER_REQUEST2_KEY code_slice <b
+key3 "other_request2_key" $>id code_slice <b
 	100 32 u,
 	req2 nullref,
 	key1 256 u,
