@@ -55,45 +55,69 @@
 } : comment@
 
 {
+	<s sbits 0 <>
+} : req@msg?
+
+{
 	<s sbits 0 =
-} : cancellation?@req
+} : req@cancellation?
+
+{
+	<s srefs 1 =
+} : cancellation@comment?
+
+{
+	<s ref@ <s comment@
+} : cancellation@comment
 
 {
 	<s 2 u@+ nip 1 i@
-} : bounceable@msg
+} : msg@bounceable
 
 {
 	<s 9 u@+ nip 8 i@+ 256 u@
-} : addr@msg
+} : msg@addr
 
 {
-	dup addr@msg rot bounceable@msg { 6 } { 7 } cond smca>$
-} : addr@msg>$
+	dup msg@addr rot msg@bounceable { 6 } { 7 } cond smca>$
+	msg@bounceable { " (bounceable)" $+ } { " (non-bounceable)" $+ } cond
+} : msg@addr>$
 
 {
 	<s 17 u@+ nip 256 u@+ nip Gram@
-} : amount@msg
+} : msg@amount
 
 {
 	<s 17 u@+ nip 256 u@+ nip Gram@+ nip 106 u@+ nip body@
-} : body@msg
+} : msg@body
 
 {
 	<s 32 u@
-} : op@body
+} : body@op
 
 {
-	op@body 0 =
-} : simple_transfer?@body
+	body@op 0 =
+} : body@simple_transfer?
 
 {
 	<s 32 u@+ swap 0 = { comment@ } { null } cond
-} : simple_transfer_comment@body
+} : simple_transfer@comment
 
+{
+	body@op 1 =
+} : body@replace_key?
+
+{
+	<s 32 u@+ nip 32 B@
+} : replace_key@old_key
+
+{
+	<s 32 u@+ nip 32 B@+ nip 32 B@
+} : replace_key@new_key
 
 {
 	<s 32 u@
-} : seqno@data
+} : data@seqno
 
 {
 	<s 32 u@+ nip nullref@+ nip 32 B@+ 32 B@+ 32 B@
@@ -101,7 +125,7 @@
 	2dup Bcmp -1 = { swap } if rot
 	2dup Bcmp -1 = { swap } if -rot
 	2dup Bcmp  1 = { swap } if
-} : keys@data
+} : data@keys
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -117,7 +141,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : my_request@data
+} : data@my_request
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -137,7 +161,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : other_request1@data
+} : data@other_request1
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -157,7 +181,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : other_request1_key@data
+} : data@other_request1_key
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -169,7 +193,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : other_request2@data
+} : data@other_request2
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -181,4 +205,4 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : other_request2_key@data
+} : data@other_request2_key

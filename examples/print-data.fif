@@ -35,66 +35,73 @@ constant public_key
 	dup null? { drop } {
 		256 B>u@ 64 (0x.) type
 	} cond
-} : .key
+} : key.
 
 {
 	dup null? { drop } {
-		dup cancellation?@req {
-			."cancellation" <s dup empty? { drop } {
-				." | " ref@ <s comment@ type
+		dup req@cancellation? {
+			cancellation@comment? {
+				."cancellation | " cancellation@comment type
+			} {
+				."cancellation" drop
 			} cond
 		} {
-			dup addr@msg contract_address addr= {
-				body@msg
-				dup op@body 1 = {
-					."replace key | " <s 32 u@+ nip 32 B@+ 32 B@ swap .key ." => " .key
+			dup msg@amount .GR
+			dup msg@addr contract_address addr= {
+				."SELF "
+
+				msg@body
+				dup body@simple_transfer? {
+					."| simple transfer | " simple_transfer@comment type
 				} {
-					."self | " op@body 16 (0x.) type
+					dup body@replace_key? {
+						."| replace key | " dup replace_key@old_key key. ." => " replace_key@new_key key.
+					} {
+						."| unknown op " drop
+					} cond
 				} cond
 			} {
-				dup amount@msg .GR
-				dup addr@msg>$ type space
-				dup bounceable@msg { ."(bounceable) " } { ."(non-bounceable) " } cond
+				dup msg@addr>$ type space
 
-				body@msg
-				dup simple_transfer?@body {
-					."| simple transfer | " simple_transfer_comment@body type
+				msg@body
+				dup body@simple_transfer? {
+					."| simple transfer | " simple_transfer@comment type
 				} {
-					."| " op@body 16 (0x.) type
+					."| op " body@op 16 (0x.) type
 				} cond
 			} cond
 		} cond
 	} cond
-} : .req
+} : req.
 
 
 4 {
 	dup $() "seqno" $= {
-		contract_data seqno@data (.) type
+		contract_data data@seqno (.) type
 	} if
 
 	dup $() "keys" $= {
-		contract_data keys@data .key space .key space .key
+		contract_data data@keys key. space key. space key.
 	} if
 
 	dup $() "my_request" $= {
-		public_key contract_data my_request@data .req
+		public_key contract_data data@my_request req.
 	} if
 
 	dup $() "other_request1" $= {
-		public_key contract_data other_request1@data .req
+		public_key contract_data data@other_request1 req.
 	} if
 
 	dup $() "other_request1_key" $= {
-		public_key contract_data other_request1_key@data .key
+		public_key contract_data data@other_request1_key key.
 	} if
 
 	dup $() "other_request2" $= {
-		public_key contract_data other_request2@data .req
+		public_key contract_data data@other_request2 req.
 	} if
 
 	dup $() "other_request2_key" $= {
-		public_key contract_data other_request2_key@data .key
+		public_key contract_data data@other_request2_key key.
 	} if
 
 	cr

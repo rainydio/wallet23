@@ -47,7 +47,7 @@ constant msg_boc_file
 b> constant out_msg
 
 <b
-	contract_data seqno@data 32 u,
+	contract_data data@seqno 32 u,
 	now 60 + 32 u,
 	out_msg ref,
 b> constant payload

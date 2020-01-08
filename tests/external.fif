@@ -123,11 +123,11 @@ constant all_msgs
 			4 pick type
 			9 pick { ."  " } swap 3 swap - times
 			."  "
-			1 pick seqno@data (.) type
+			1 pick data@seqno (.) type
 			."  "
-			1 pick key1pub swap my_request@data .msg ." "
-			1 pick key2pub swap my_request@data .msg ." "
-			1 pick key3pub swap my_request@data .msg
+			1 pick key1pub swap data@my_request .msg ." "
+			1 pick key2pub swap data@my_request .msg ." "
+			1 pick key3pub swap data@my_request .msg
 			."  "
 			2 pick .c5msg
 			cr
