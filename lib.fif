@@ -1,6 +1,8 @@
 "Asm.fif" include
 "TonUtil.fif" include
 
+// check if two addresses are equal
+// wc1 hash1 wc2 hash2 -> result
 {
 	rot = -rot = and
 } : addr=
@@ -54,44 +56,44 @@
 
 {
 	<s sbits 0 =
-} : req@cancellation?
+} : cancellation?@req
 
 {
 	<s 2 u@+ nip 1 i@
-} : msg@bounceable
+} : bounceable@msg
 
 {
 	<s 9 u@+ nip 8 i@+ 256 u@
-} : msg@addr
+} : addr@msg
 
 {
-	dup msg@addr rot msg@bounceable { 6 } { 7 } cond smca>$
-} : msg@smca>$
+	dup addr@msg rot bounceable@msg { 6 } { 7 } cond smca>$
+} : addr@msg>$
 
 {
 	<s 17 u@+ nip 256 u@+ nip Gram@
-} : msg@amount
+} : amount@msg
 
 {
 	<s 17 u@+ nip 256 u@+ nip Gram@+ nip 106 u@+ nip body@
-} : msg@body
+} : body@msg
 
 {
 	<s 32 u@
-} : body@operation_id
+} : op@body
 
 {
-	body@operation_id 0 =
-} : body@simple_transfer?
+	op@body 0 =
+} : simple_transfer?@body
 
 {
 	<s 32 u@+ swap 0 = { comment@ } { null } cond
-} : body@simple_transfer_comment
+} : simple_transfer_comment@body
 
 
 {
 	<s 32 u@
-} : data@seqno
+} : seqno@data
 
 {
 	<s 32 u@+ nip nullref@+ nip 32 B@+ 32 B@+ 32 B@
@@ -99,7 +101,7 @@
 	2dup Bcmp -1 = { swap } if rot
 	2dup Bcmp -1 = { swap } if -rot
 	2dup Bcmp  1 = { swap } if
-} : data@keys
+} : keys@data
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -115,7 +117,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : data@my_request
+} : my_request@data
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -135,7 +137,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : data@other_request1
+} : other_request1@data
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -155,7 +157,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : data@other_request1_key
+} : other_request1_key@data
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -167,7 +169,7 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : data@other_request2
+} : other_request2@data
 
 {
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
@@ -179,4 +181,4 @@
 	} cond
 
 	6 -roll { drop } 6 times
-} : data@other_request2_key
+} : other_request2_key@data

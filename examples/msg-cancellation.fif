@@ -37,7 +37,7 @@ constant msg_boc_file
 b> constant cancellation
 
 <b
-	contract_data data@seqno 32 u,
+	contract_data seqno@data 32 u,
 	now 60 + 32 u,
 	cancellation ref,
 b> constant payload

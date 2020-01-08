@@ -25,15 +25,15 @@ $3 load-keypair
 constant private_key
 constant public_key
 
-$4 "other_request1" $= { public_key contract_data data@other_request1 } if
-$4 "other_request2" $= { public_key contract_data data@other_request2 } if
+$4 "other_request1" $= { public_key contract_data other_request1@data } if
+$4 "other_request2" $= { public_key contract_data other_request2@data } if
 constant confirmation
 
 $5
 constant msg_boc_file
 
 <b
-	contract_data data@seqno 32 u,
+	contract_data seqno@data 32 u,
 	now 60 + 32 u,
 	confirmation ref,
 b> constant payload

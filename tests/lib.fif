@@ -10,143 +10,143 @@ newkeypair nip constant key2
 newkeypair nip constant key3
 
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@seqno
-100 <> abort"data@seqno"
+seqno@data
+100 <> abort"seqno@data"
 
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@keys
-2 pick 2 pick Bcmp 1 = abort"data@keys"
-1 pick 1 pick Bcmp 1 = abort"data@keys"
+keys@data
+2 pick 2 pick Bcmp 1 = abort"keys@data"
+1 pick 1 pick Bcmp 1 = abort"keys@data"
 drop drop drop
 
 
 key1
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@my_request
-null? not abort"data@my_request"
+my_request@data
+null? not abort"my_request@data"
 
 key2
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@my_request
-null? not abort"data@my_request"
+my_request@data
+null? not abort"my_request@data"
 
 key3
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@my_request
-null? not abort"data@my_request"
+my_request@data
+null? not abort"my_request@data"
 
 key1
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@my_request
-hashu req1 hashu <> abort"data@my_request"
+my_request@data
+hashu req1 hashu <> abort"my_request@data"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@my_request
-hashu req2 hashu <> abort"data@my_request"
+my_request@data
+hashu req2 hashu <> abort"my_request@data"
 
 
 key1
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1
-null? not abort"data@other_request1"
+other_request1@data
+null? not abort"other_request1@data"
 
 key2
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1
-null? not abort"data@other_request1"
+other_request1@data
+null? not abort"other_request1@data"
 
 key3
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1
-null? not abort"data@other_request1"
+other_request1@data
+null? not abort"other_request1@data"
 
 key1
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1
-hashu req2 hashu <> abort"data@other_request1"
+other_request1@data
+hashu req2 hashu <> abort"other_request1@data"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1
-hashu req1 hashu <> abort"data@other_request1"
+other_request1@data
+hashu req1 hashu <> abort"other_request1@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1
-hashu req1 hashu <> abort"data@other_request1"
+other_request1@data
+hashu req1 hashu <> abort"other_request1@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1
-hashu req2 hashu <> abort"data@other_request1"
+other_request1@data
+hashu req2 hashu <> abort"other_request1@data"
 
 
 key1
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1_key
-null? not abort"data@other_request1_key"
+other_request1_key@data
+null? not abort"other_request1_key@data"
 
 key2
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1_key
-null? not abort"data@other_request1_key"
+other_request1_key@data
+null? not abort"other_request1_key@data"
 
 key3
 <b 100 32 u, null nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1_key
-null? not abort"data@other_request1_key"
+other_request1_key@data
+null? not abort"other_request1_key@data"
 
 key1
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1_key
-key2 B= not abort"data@other_request1_key"
+other_request1_key@data
+key2 B= not abort"other_request1_key@data"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1_key
-key1 B= not  abort"data@other_request1_key"
+other_request1_key@data
+key1 B= not  abort"other_request1_key@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, null nullref, b>
-data@other_request1_key
-key1 B= not abort"data@other_request1_key"
+other_request1_key@data
+key1 B= not abort"other_request1_key@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request1_key
-key2 B= not abort"data@other_request1_key"
+other_request1_key@data
+key2 B= not abort"other_request1_key@data"
 
 
 key1
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2
-null? not abort"data@other_request2"
+other_request2@data
+null? not abort"other_request2@data"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2
-null? not abort"data@other_request2"
+other_request2@data
+null? not abort"other_request2@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2
-hashu req1 hashu <> abort"data@other_request2"
+other_request2@data
+hashu req1 hashu <> abort"other_request2@data"
 
 
 key1
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2_key
-null? not abort"data@other_request2_key"
+other_request2_key@data
+null? not abort"other_request2_key@data"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2_key
-null? not abort"data@other_request2_key"
+other_request2_key@data
+null? not abort"other_request2_key@data"
 
 key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
-data@other_request2_key
-key1 B= not abort"data@other_request2_key"
+other_request2_key@data
+key1 B= not abort"other_request2_key@data"
 
 depth 0 <> abort"stack depth"
