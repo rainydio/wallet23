@@ -1,5 +1,9 @@
 #!/bin/bash
 
+format_request() {
+	sed 's/ | /\n/g' | sed 's/^ *//' | fold -w 80 -s | sed 's/^/  /'
+}
+
 examples=$(dirname $(realpath $0))
 temp=$(mktemp --directory /tmp/wallet23.XXX) || exit 1
 
@@ -113,7 +117,7 @@ while [[ true ]]; do
 
 	if [[ $my_request != "" ]]; then
 		echo "my request:"
-		echo "  $my_request"
+		echo "$my_request" | format_request
 
 		if [[ $other_request1 != "" ]]; then
 			echo ""
@@ -122,11 +126,15 @@ while [[ true ]]; do
 
 	if [[ $other_request1 != "" ]]; then
 		echo "confirm1:"
-		echo "  $other_request1 (by ${other_request1_key:0:8})"
+		echo "$other_request1" | format_request
+		echo "   - by ${other_request1_key:0:8}"
+		echo ""
 	fi
 	if [[ $other_request2 != "" ]]; then
 		echo "confirm2:"
-		echo "  $other_request2 (by ${other_request2_key:0:8})"
+		echo "$other_request2" | format_request
+		echo "   - by ${other_request2_key:0:8}"
+		echo ""
 	fi
 	if [[ $my_request == "" && ($other_request1 != "" || $other_request2 != "") ]]; then
 		echo "cancel:"

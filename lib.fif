@@ -69,8 +69,11 @@
 } : msg@addr
 
 {
-	dup msg@addr rot msg@bounceable { 6 } { 7 } cond smca>$
-	msg@bounceable { " (bounceable)" $+ } { " (non-bounceable)" $+ } cond
+	dup msg@addr rot msg@bounceable {
+		6 smca>$ " (bounceable)" $+
+	} {
+		7 smca>$ " (non-bounceable)" $+
+	} cond
 } : msg@addr>$
 
 {
@@ -177,7 +180,11 @@
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
 
 	5 pick 3 pick B= {
-		4 pick
+		0 pick null? {
+			null
+		} {
+			4 pick
+		} cond
 	} {
 		null
 	} cond
@@ -189,7 +196,11 @@
 	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
 
 	5 pick 3 pick B= {
-		4 pick null? { null } { 3 pick } cond
+		0 pick null? {
+			null
+		} {
+			4 pick null? { null } { 3 pick } cond
+		} cond
 	} {
 		null
 	} cond

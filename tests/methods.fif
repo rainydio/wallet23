@@ -154,6 +154,12 @@ null? not abort"other_request2"
 
 key3
 "other_request2" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request2"
+null? not abort"other_request2"
+
+key3
+"other_request2" $>id code_slice
 <b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
 runvm drop 0 <> abort"other_request2"
 hashu req1 hashu <> abort"other_request2"
@@ -173,8 +179,14 @@ null? not abort"other_request2_key"
 
 key3
 "other_request2_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request2_key"
+null? not abort"other_request2_key"
+
+key3
+"other_request2_key" $>id code_slice
 <b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
-runvm drop 0 <> abort"other_request2"
+runvm drop 0 <> abort"other_request2_key"
 key1 <> abort"other_request2_key"
 
 depth 0 <> abort"stack depth"

@@ -129,6 +129,11 @@ data@other_request2
 null? not abort"data@other_request2"
 
 key3
+<b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, null nullref, b>
+data@other_request2
+null? not abort"data@other_request2"
+
+key3
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
 data@other_request2
 hashu req1 hashu <> abort"data@other_request2"
@@ -141,6 +146,11 @@ null? not abort"data@other_request2_key"
 
 key2
 <b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, req2 nullref, b>
+data@other_request2_key
+null? not abort"data@other_request2_key"
+
+key3
+<b 100 32 u, req1 nullref, key1 B, key3 B, key2 B, null nullref, b>
 data@other_request2_key
 null? not abort"data@other_request2_key"
 
