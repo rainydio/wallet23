@@ -3,6 +3,8 @@
 examples=$(dirname $(realpath $0))
 temp=$(mktemp --directory /tmp/wallet23.XXX) || exit 1
 
+trap "{ rm -rf $temp; }" EXIT
+
 if [[ $1 != *.pk ]]; then wallet_address="$1"; fi
 if [[ $1 == *.pk && -f $1 ]]; then key_file="$1"; fi
 if [[ $2 == *.pk && -f $2 ]]; then key_file="$2"; fi
