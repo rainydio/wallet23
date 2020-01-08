@@ -1,6 +1,0 @@
-#!/bin/env -S fift -s
-
-"lib.fif" include
-"methods.fif" include
-"replace-key.fif" include
-"external.fif" include

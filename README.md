@@ -152,7 +152,7 @@ TOTAL  GAS   MSG              N  KEY1 KEY2 KEY3  SENT
 To generate report and compare it to previously committed:
 
 ```sh
-$ fift -s tests/all.fif > test-report.txt && git difftool test-report.txt
+$ fift -s tests/test-all.fif > test-report.txt && git difftool test-report.txt
 ```
 
 [original submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
