@@ -78,17 +78,20 @@ Contract code located in [contract.fif] is small, but relatively sophisticated a
 
 ### Methods
 
-Several methods that query data cell are implemented, some of them accept single `my_key: 256u` argument:
+Several methods to query data cell are implemented:
 
 - `seqno`
 - `keys` three keys in ascending order.
-- `my_request` request cell made by `my_key` or null.
-- `other_request1` earliest request cell made by some other key or null.
+
+Most of them take one of the keys as argument:
+
+- `my_request` request cell made by key.
+- `other_request1` earliest request made by some other key.
 - `other_request1_key` key that made `other_request1`.
-- `other_request2` request cell that was made after `other_request1`.
+- `other_request2` request that was made after `other_request1`.
 - `other_request2_key` key that made `other_request2`.
 
-These methods can be called by lite-client runmethod command. Alternatively [lib.fif] contains fift implementations, but with key being bytes instead of integer.
+These methods can be called by lite-client runmethod command. Alternatively [lib.fif] contains fift implementations.
 
 ### Examples
 
