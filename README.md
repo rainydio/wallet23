@@ -78,22 +78,15 @@ Contract code located in [contract.fif] is small, but relatively sophisticated a
 
 ### Methods
 
-Several methods that query data cell are implemented:
+Several methods that query data cell are implemented, some of them accept single `my_key: 256u` argument:
 
-- `seqno ( -> seqno: 32u)`
-- `keys ( -> key1: 256u, key2: 256u, key3: 256u)` three keys in ascending order.
-- `last_request ( -> request: cell|null)` last request that was made.
-- `last_request_key ( -> key: 256u|null)` key that made last request.
-- `prev_request ( -> request: cell|null)` request that was made before last.
-- `prev_request_key ( -> key: 256u|null)` key that made `prev_request`.
-
-Additionally several methods accept single `my_key: 256u` argument:
-
-- `my_request (my_key: 256u -> my_request: cell|null)` request made by `my_key`.
-- `other_request1 (my_key: 256u -> request: cell|null)` earliest request made by other key.
-- `other_request1_key (my_key: 256u -> key: 256u|null)` key that made `other_request1`.
-- `other_request2 (my_key: 256u -> request: cell|null)` request that was made after `other_request1`.
-- `other_request2_key (my_key: 256u -> key: 256u|null)` key that made `other_request2`.
+- `seqno`
+- `keys` three keys in ascending order.
+- `my_request` request cell made by `my_key` or null.
+- `other_request1` earliest request cell made by some other key or null.
+- `other_request1_key` key that made `other_request1`.
+- `other_request2` request cell that was made after `other_request1`.
+- `other_request2_key` key that made `other_request2`.
 
 These methods can be called by lite-client runmethod command. Alternatively [lib.fif] contains fift implementations, but with key being bytes instead of integer.
 
@@ -101,26 +94,26 @@ These methods can be called by lite-client runmethod command. Alternatively [lib
 
 Several example scripts are implemented.
 
-- [msg-init.fif] new wallet.
-- [msg-simple-transfer.fif] new simple transfer request.
-- [msg-cancellation.fif] new cancellation request.
-- [msg-confirmation.fif] confirmation.
-- [msg-replace-key.fif] new request to replace one of the keys.
-- [print-contract-data.fif] prints information stored in data cell.
+- [examples/msg-init.fif] new wallet.
+- [examples/msg-simple-transfer.fif] new simple transfer request.
+- [examples/msg-cancellation.fif] new cancellation request.
+- [examples/msg-confirmation.fif] confirmation.
+- [examples/msg-replace-key.fif] new request to replace one of the keys.
+- [examples/print-data.fif] prints information stored in data cell.
 
-Beware that usage information is printed only when called without arguments. Many of them also require contract data cell to be downloaded first:
+Many of them also require contract data cell to be downloaded first:
 
 ```sh
-$ lite-client -c "last" -c "saveaccountdata contract-data.boc <address>"
+$ lite-client -c "last" -c "saveaccountdata data.boc <address>"
 ```
 
-Using them example [wallet.sh] bash script provides simple wallet console application:
+Using them example [examples/wallet.sh] bash script provides simple wallet console application:
 
-![wallet.sh.gif][wallet.sh.gif]
+![examples/wallet.sh.gif][examples/wallet.sh.gif]
 
 ### Init envelope
 
-Contract code does not contain special initialization checks (if seqno is zero). When building stateinit contract code should be wrapped into init envelope. Example [msg-init.fif] script uses such envelope:
+Contract code does not contain special initialization checks (if seqno is zero). When building stateinit contract code should be wrapped into init envelope. Example [examples/msg-init.fif] script uses such envelope:
 
 ```
 0 constant nonce
@@ -128,7 +121,7 @@ Contract code does not contain special initialization checks (if seqno is zero).
 <{
  SETCP0 ACCEPT
  nonce INT
- "contract.fif" include PUSHREF SETCODE
+ "../contract.fif" include PUSHREF SETCODE
 }>c
 ```
 
@@ -156,18 +149,18 @@ TOTAL  GAS   MSG              N  KEY1 KEY2 KEY3  SENT
 To generate report and compare it to previously committed:
 
 ```sh
-$ fift -s test.fif > test-report.txt && git difftool test-report.txt
+$ fift -s tests/all.fif > test-report.txt && git difftool test-report.txt
 ```
 
 [original submission]: https://github.com/rainydio/wallet23/tree/a655b1acb3853b8fa33c34909a43d8e80b977bca
 [contract.fif]: https://github.com/rainydio/wallet23/blob/master/contract.fif
 [lib.fif]: https://github.com/rainydio/wallet23/blob/master/lib.fif
-[msg-init.fif]: https://github.com/rainydio/wallet23/blob/master/msg-init.fif
-[msg-simple-transfer.fif]: https://github.com/rainydio/wallet23/blob/master/msg-simple-transfer.fif
-[msg-cancellation.fif]: https://github.com/rainydio/wallet23/blob/master/msg-cancellation.fif
-[msg-confirmation.fif]: https://github.com/rainydio/wallet23/blob/master/msg-confirmation.fif
-[msg-replace-key.fif]: https://github.com/rainydio/wallet23/blob/master/msg-replace-key.fif
-[print-contract-data.fif]: https://github.com/rainydio/wallet23/blob/master/print-contract-data.fif
-[wallet.sh]: https://github.com/rainydio/wallet23/blob/master/wallet.sh
-[wallet.sh.gif]: https://raw.githubusercontent.com/rainydio/wallet23/master/wallet.sh.gif
+[examples/msg-init.fif]: https://github.com/rainydio/wallet23/blob/master/examples/msg-init.fif
+[examples/msg-simple-transfer.fif]: https://github.com/rainydio/wallet23/blob/master/examples/msg-simple-transfer.fif
+[examples/msg-cancellation.fif]: https://github.com/rainydio/wallet23/blob/master/examples/msg-cancellation.fif
+[examples/msg-confirmation.fif]: https://github.com/rainydio/wallet23/blob/master/examples/msg-confirmation.fif
+[examples/msg-replace-key.fif]: https://github.com/rainydio/wallet23/blob/master/examples/msg-replace-key.fif
+[examples/print-data.fif]: https://github.com/rainydio/wallet23/blob/master/examples/print-data.fif
+[examples/wallet.sh]: https://github.com/rainydio/wallet23/blob/master/examples/wallet.sh
+[examples/wallet.sh.gif]: https://raw.githubusercontent.com/rainydio/wallet23/master/examples/wallet.sh.gif
 [test-report.txt]: https://github.com/rainydio/wallet23/blob/master/test-report.txt

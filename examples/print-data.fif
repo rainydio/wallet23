@@ -1,0 +1,102 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+"../lib.fif" include
+
+$# 3 < {
+	."fift -s " $0 type ." <contract address> <data boc file> <key file> [<selector> ...]" cr
+	."  print information stored in contract data cell" cr
+	cr
+	."selectors:" cr
+	."  seqno               seqno" cr
+	."  keys                three public keys in ascending order" cr
+	."  my_request          description of request made by key stored in <key file>" cr
+	."  other_request1      description of first request made by other key" cr
+	."  other_request1_key  key that made first request" cr
+	."  other_request2      description of second request made by other key" cr
+	."  other_request2_key  key that made second request" cr
+	cr
+	."contract data cell has to be downloaded first:" cr
+	."    lite-client -c 'last' -c 'saveaccountdata <data boc file> <contract address>'" cr
+
+	100 halt
+} if
+
+$1 false parse-load-address drop
+2constant contract_address
+
+$2 file>B B>boc
+constant contract_data
+
+$3 file>B priv>pub
+constant public_key
+
+{
+	dup null? { drop } {
+		256 B>u@ 64 (0x.) type
+	} cond
+} : .key
+
+{
+	dup null? { drop } {
+		dup req@cancellation? {
+			."cancellation" <s dup empty? { drop } {
+				." | " ref@ <s comment@ type
+			} cond
+		} {
+			dup msg@addr contract_address addr= {
+				msg@body
+				dup body@operation_id 1 = {
+					."replace key | " <s 32 u@+ nip 32 B@+ 32 B@ swap .key ." => " .key
+				} {
+					."self | " body@operation_id 16 (0x.) type
+				} cond
+			} {
+				dup msg@amount .GR
+				dup msg@smca>$ type space
+				dup msg@bounceable { ."(bounceable) " } { ."(non-bounceable) " } cond
+
+				msg@body
+				dup body@simple_transfer? {
+					."| simple transfer | " body@simple_transfer_comment type
+				} {
+					."| " body@operation_id 16 (0x.) type
+				} cond
+			} cond
+		} cond
+	} cond
+} : .req
+
+
+4 {
+	dup $() "seqno" $= {
+		contract_data data@seqno (.) type
+	} if
+
+	dup $() "keys" $= {
+		contract_data data@keys .key space .key space .key
+	} if
+
+	dup $() "my_request" $= {
+		public_key contract_data data@my_request .req
+	} if
+
+	dup $() "other_request1" $= {
+		public_key contract_data data@other_request1 .req
+	} if
+
+	dup $() "other_request1_key" $= {
+		public_key contract_data data@other_request1_key .key
+	} if
+
+	dup $() "other_request2" $= {
+		public_key contract_data data@other_request2 .req
+	} if
+
+	dup $() "other_request2_key" $= {
+		public_key contract_data data@other_request2_key .key
+	} if
+
+	cr
+	1 +
+} $# 3 - times

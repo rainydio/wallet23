@@ -2,28 +2,32 @@
 "TonUtil.fif" include
 
 {
+	rot = -rot = and
+} : addr=
+
+// get Integer id of method String s:
+// s -> id
+{
 	$>B crc16 0x10000 or
 } : $>id
 
+// serialize nullable Cell c into Builder b leaving new Builder b':
+// b, c -> b'
 {
 	dict,
 } : nullref,
 
+// deserialize nullable Cell c from Slice s leaving remainder Slice s':
+// s -> c, s'
 {
 	1 u@+ swap { ref@+ swap } { null swap } cond
 } : nullref@+
 
+// deserialize nullable Cell c from Slice s:
+// s -> c
 {
 	nullref@+ drop
 } : nullref@
-
-{
-	dup null? { drop null? } {
-		over null? { nip null? } {
-			hashu swap hashu =
-		} cond
-	} cond
-} : nullref=
 
 {
 	2dup <s s-fits? {
@@ -38,153 +42,141 @@
 } : body@
 
 {
-	dup null? { drop null? } {
-		over null? { nip null? } {
-			B=
-		} cond
-	} cond
-} : nullB=
+	"" swap {
+		dup sbits 8 /c $@+ -rot $+ swap
+		dup srefs 0 = {
+			ref@ <s
+		} ifnot
+		dup empty?
+	} until
+	drop
+} : comment@
 
 {
-	<s
-		32 u@+ drop
-} : seqno
+	<s sbits 0 =
+} : req@cancellation?
 
 {
-	<s
-		32 u@+ nip
-		nullref@+ nip
-		32 B@+ 32 B@+ 32 B@+ drop
+	<s 2 u@+ nip 1 i@
+} : msg@bounceable
+
+{
+	<s 9 u@+ nip 8 i@+ 256 u@
+} : msg@addr
+
+{
+	dup msg@addr rot msg@bounceable { 6 } { 7 } cond smca>$
+} : msg@smca>$
+
+{
+	<s 17 u@+ nip 256 u@+ nip Gram@
+} : msg@amount
+
+{
+	<s 17 u@+ nip 256 u@+ nip Gram@+ nip 106 u@+ nip body@
+} : msg@body
+
+{
+	<s 32 u@
+} : body@operation_id
+
+{
+	body@operation_id 0 =
+} : body@simple_transfer?
+
+{
+	<s 32 u@+ swap 0 = { comment@ } { null } cond
+} : body@simple_transfer_comment
+
+
+{
+	<s 32 u@
+} : data@seqno
+
+{
+	<s 32 u@+ nip nullref@+ nip 32 B@+ 32 B@+ 32 B@
 
 	2dup Bcmp -1 = { swap } if rot
 	2dup Bcmp -1 = { swap } if -rot
-	2dup Bcmp 1 = { swap } if
-} : keys
+	2dup Bcmp  1 = { swap } if
+} : data@keys
 
 {
-	<s
-		32 u@+ nip
-		nullref@+ drop
-} : last_request
+	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
 
-{ last_request null? not } : last_request?
-
-{
-	dup last_request? {
-		<s
-			32 u@+ nip
-			nullref@+ nip
-			32 B@+ drop
-	} { drop null } cond
-} : last_request_key
-
-{ last_request_key null? not } : last_request_key?
-{ last_request_key nullB= } : last_request_key=
-
-{
-	<s
-		32 u@+ nip
-		nullref@+ nip
-		32 B@+ nip
-		32 B@+ nip
-		32 B@+ nip
-		nullref@+ drop
-} : prev_request
-
-{
-	prev_request null? not
-} : prev_request?
-
-{
-	dup prev_request? {
-		<s
-			32 u@+ nip
-			nullref@+ nip
-			32 B@+ nip
-			32 B@+ nip
-			32 B@+ drop
-	} { drop null } cond
-} : prev_request_key
-
-{ prev_request_key null? not } : prev_request_key?
-{ prev_request_key nullB= } : prev_request_key=
-
-{
-	2dup last_request_key= {
-		nip last_request
+	5 pick 2 pick B= {
+		0 pick
 	} {
-		2dup prev_request_key= {
-			nip prev_request
+		5 pick 4 pick B= {
+			4 pick
 		} {
-			2drop null
+			null
 		} cond
 	} cond
-} : my_request
 
-{ my_request null? not } : my_request?
-
-{
-	2dup my_request? {
-		2dup last_request_key= {
-			nip prev_request
-		} {
-			nip last_request
-		} cond
-	} {
-		dup prev_request? {
-			nip prev_request
-		} {
-			nip last_request
-		} cond
-	} cond
-} : other_request1
-
-{ other_request1 null? not } : other_request1?
+	6 -roll { drop } 6 times
+} : data@my_request
 
 {
-	2dup my_request? {
-		2dup last_request_key= {
-			nip prev_request_key
-		} {
-			nip last_request_key
-		} cond
+	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
+
+	5 pick 2 pick B= {
+		4 pick
 	} {
-		dup prev_request? {
-			nip prev_request_key
+		5 pick 4 pick B= {
+			0 pick
 		} {
-			nip last_request_key
+			0 pick null? {
+				4 pick
+			} {
+				0 pick
+			} cond
 		} cond
 	} cond
-} : other_request1_key
 
-{ other_request1_key null? not } : other_request1_key?
-{ other_request1_key nullB= } : other_request1_key=
+	6 -roll { drop } 6 times
+} : data@other_request1
 
 {
-	2dup my_request? {
-		2drop null
+	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
+
+	5 pick 2 pick B= {
+		4 pick null? { null } { 3 pick } cond
 	} {
-		dup prev_request? {
-			nip last_request
+		5 pick 4 pick B= {
+			0 pick null? { null } { 1 pick } cond
 		} {
-			2drop null
+			0 pick null? {
+				4 pick null? { null } { 3 pick } cond
+			} {
+				0 pick null? { null } { 1 pick } cond
+			} cond
 		} cond
 	} cond
-} : other_request2
 
-{ other_request2 null? not } : other_request2?
+	6 -roll { drop } 6 times
+} : data@other_request1_key
 
 {
-	2dup my_request? {
-		2drop null
-	} {
-		dup prev_request? {
-			nip last_request_key
-		} {
-			2drop null
-		} cond
-	} cond
-} : other_request2_key
+	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
 
-{ other_request2_key null? not } : other_request2_key?
-{ other_request2_key nullB= } : other_request2_key=
+	5 pick 3 pick B= {
+		4 pick
+	} {
+		null
+	} cond
+
+	6 -roll { drop } 6 times
+} : data@other_request2
+
+{
+	<s 32 u@+ nip nullref@+ 32 B@+ 32 B@+ 32 B@+ nullref@
+
+	5 pick 3 pick B= {
+		4 pick null? { null } { 3 pick } cond
+	} {
+		null
+	} cond
+
+	6 -roll { drop } 6 times
+} : data@other_request2_key

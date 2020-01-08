@@ -1,0 +1,63 @@
+#!/bin/env -S fift -s
+
+"TonUtil.fif" include
+"../lib.fif" include
+
+$# 5 < {
+	."fift -s " $0 type ." <contract address> <data boc file> <key file> <comment> <msg boc file>" cr
+	."  create new cancellation request with <comment>" cr
+	."  signed by private key stored in <key file>" cr
+	."  message is saved to <msg boc file>" cr
+	cr
+	."contract data cell has to be downloaded first:" cr
+	."  lite-client -c 'last' -c 'saveaccountdata <data boc file> <contract address>'" cr
+
+	100 halt
+} if
+
+$1 false parse-load-address drop
+2constant contract_address
+
+$2 file>B B>boc
+constant contract_data
+
+$3 load-keypair nip
+constant private_key
+
+$4
+constant comment
+
+$5
+constant msg_boc_file
+
+<b
+	comment $len {
+		<b comment 36 append-long-string b> ref,
+	} if
+b> constant cancellation
+
+<b
+	contract_data data@seqno 32 u,
+	now 60 + 32 u,
+	cancellation ref,
+b> constant payload
+
+<b
+	b{100} s,
+	contract_address addr,
+	payload <s s,
+b> hashu constant signed_hash
+
+signed_hash private_key ed25519_sign_uint
+constant signature
+
+<b
+	b{1000100} s,
+	contract_address addr,
+	0 Gram,
+	b{00} s,
+	signature B,
+	payload <s s,
+b> constant msg_cancellation
+
+msg_cancellation 2 boc+>B msg_boc_file B>file

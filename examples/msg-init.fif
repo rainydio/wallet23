@@ -2,52 +2,53 @@
 
 "Asm.fif" include
 "TonUtil.fif" include
+"../lib.fif" include
 
-$# 0 = {
-	."fift -s " $0 type ." <workchain id> <nonce>" cr
+$# 7 < {
+	."fift -s " $0 type ." <key1 file> <key2 file> <key3 file> <workchain id> <nonce> <address file> <msg boc file>" cr
 	."  create new wallet in <workchain id>" cr
 	."  preferred address can be chosen by tweaking <nonce> that is added to StateInit" cr
-	."  private key files are created if they don't already exist" cr
-	cr
-	."files:" cr
-	."  key1.pk - first private key" cr
-	."  key2.pk - second private key" cr
-	."  key3.pk - third private key" cr
-	."  contract-address.addr - contract address output" cr
-	."  msg-init.boc - init message output" cr
+	."  key files are created if they don't already exist" cr
+	."  address (non-bounceable) is saved to <address file>" cr
+	."  message is saved to <msg boc file>" cr
 
 	100 halt
 } if
 
-
-$1 parse-int
-constant workchain_id
-
-$2 parse-int
-constant nonce
-
-"key1.pk" load-generate-keypair drop
+$1 load-generate-keypair drop
 constant key1_pub
 
-"key2.pk" load-generate-keypair drop
+$2 load-generate-keypair drop
 constant key2_pub
 
-"key3.pk" load-generate-keypair drop
+$3 load-generate-keypair drop
 constant key3_pub
+
+$4 parse-int
+constant workchain_id
+
+$5 parse-int
+constant nonce
+
+$6
+constant address_file
+
+$7
+constant msg_boc_file
 
 <{
 	SETCP0 ACCEPT
 	nonce INT
-	"contract.fif" include PUSHREF SETCODE
+	"../contract.fif" include PUSHREF SETCODE
 }>c constant envelope
 
 <b
 	1 32 u,
-	b{0} s,
+	null nullref,
 	key2_pub B,
 	key3_pub B,
 	key1_pub B,
-	b{0} s,
+	null nullref,
 b> constant data
 
 <b
@@ -69,8 +70,8 @@ stateinit hashu
 	b{0} s,
 b> constant msg_init
 
-contract_address "contract-address.addr" save-address-verbose
-msg_init 2 boc+>B "msg-init.boc" B>file
+contract_address 7 smca>$ $>B address_file B>file
+msg_init 2 boc+>B msg_boc_file B>file
 
 cr
 ."address:        " contract_address .addr cr

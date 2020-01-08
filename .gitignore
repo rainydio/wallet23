@@ -1,3 +1,7 @@
 .vscode/
 .envrc
-mywallet/
+.mywallet.txt
+.mywallet.boc
+key1.pk
+key2.pk
+key3.pk

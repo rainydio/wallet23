@@ -1,0 +1,180 @@
+#!/bin/env -S fift -s
+
+"../lib.fif" include
+"../contract.fif" include <s constant code_slice
+
+<b 1 8 u, b> constant req1
+<b 2 8 u, b> constant req2
+
+newkeypair nip 256 B>u@ constant key1
+newkeypair nip 256 B>u@ constant key2
+newkeypair nip 256 B>u@ constant key3
+
+"seqno" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"seqno"
+100 <> abort"seqno"
+
+"keys" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"keys"
+2 pick 2 pick > abort"keys"
+1 pick 1 pick > abort"keys"
+drop drop drop
+
+
+key1
+"my_request" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"my_request"
+null? not abort"my_request"
+
+key2
+"my_request" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"my_request"
+null? not abort"my_request"
+
+key3
+"my_request" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"my_request"
+null? not abort"my_request"
+
+key1
+"my_request" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"my_request"
+hashu req1 hashu <> abort"my_request"
+
+key2
+"my_request" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"my_request"
+hashu req2 hashu <> abort"my_request"
+
+
+key1
+"other_request1" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1"
+null? not abort"other_request1"
+
+key2
+"other_request1" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1"
+null? not abort"other_request1"
+
+key3
+"other_request1" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1"
+null? not abort"other_request1"
+
+key1
+"other_request1" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1"
+hashu req2 hashu <> abort"other_request1"
+
+key2
+"other_request1" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1"
+hashu req1 hashu <> abort"other_request1"
+
+key3
+"other_request1" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1"
+hashu req1 hashu <> abort"other_request1"
+
+key3
+"other_request1" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1"
+hashu req2 hashu <> abort"other_request1"
+
+
+key1
+"other_request1_key" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+null? not abort"other_request1_key"
+
+key2
+"other_request1_key" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+null? not abort"other_request1_key"
+
+key3
+"other_request1_key" $>id code_slice
+<b 100 32 u, null nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+null? not abort"other_request1_key"
+
+key1
+"other_request1_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+key2 <> abort"other_request1_key"
+
+key2
+"other_request1_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+key1 <> abort"other_request1_key"
+
+key3
+"other_request1_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, null nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+key1 <> abort"other_request1_key"
+
+key3
+"other_request1_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request1_key"
+key2 <> abort"other_request1_key"
+
+
+key1
+"other_request2" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+null? not abort"other_request2"
+
+key2
+"other_request2" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+null? not abort"other_request2"
+
+key3
+"other_request2" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+hashu req1 hashu <> abort"other_request2"
+
+
+key1
+"other_request2_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+null? not abort"other_request2_key"
+
+key2
+"other_request2_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+null? not abort"other_request2_key"
+
+key3
+"other_request2_key" $>id code_slice
+<b 100 32 u, req1 nullref, key1 256 u, key3 256 u, key2 256 u, req2 nullref, b>
+runvm drop 0 <> abort"other_request2"
+key1 <> abort"other_request2_key"
+
+depth 0 <> abort"stack depth"
