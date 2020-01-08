@@ -1,32 +1,22 @@
 "Asm.fif" include
 "TonUtil.fif" include
 
-// check if two addresses are equal
-// wc1 hash1 wc2 hash2 -> result
 {
 	rot = -rot = and
 } : addr=
 
-// get Integer id of method String s:
-// s -> id
 {
 	$>B crc16 0x10000 or
 } : $>id
 
-// serialize nullable Cell c into Builder b leaving new Builder b':
-// b, c -> b'
 {
 	dict,
 } : nullref,
 
-// deserialize nullable Cell c from Slice s leaving remainder Slice s':
-// s -> c, s'
 {
 	1 u@+ swap { ref@+ swap } { null swap } cond
 } : nullref@+
 
-// deserialize nullable Cell c from Slice s:
-// s -> c
 {
 	nullref@+ drop
 } : nullref@
