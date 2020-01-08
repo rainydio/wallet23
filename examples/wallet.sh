@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -o pipefail
+
 format_request() {
-	sed 's/ | /\n/g' | sed 's/^ *//' | fold -w 80 -s | sed 's/^/  /'
+	sed 's/ | /\n/g' | sed 's/^ *//' | fold -w 78 -s | sed 's/^/  /'
 }
 
 examples=$(dirname $(realpath $0))
@@ -92,12 +94,7 @@ while [[ true ]]; do
 	balance=$(echo "scale=3; $balance_ng/1000000000" | bc)
 
 	output=$(fift -s "$examples/print-data.fif" "$wallet_address" "$temp/data.boc" "$key_file" \
-		seqno \
-		my_request \
-		other_request1 \
-		other_request1_key \
-		other_request2 \
-		other_request2_key
+		seqno my_request other_request1 other_request1_key other_request2 other_request2_key | tee /dev/stderr
 	) || exit 1
 
 	seqno=$(echo "$output" | sed -ne 1p)

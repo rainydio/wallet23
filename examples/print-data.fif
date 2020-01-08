@@ -40,7 +40,7 @@ constant public_key
 {
 	dup null? { drop } {
 		dup req@cancellation? {
-			cancellation@comment? {
+			dup cancellation@comment? {
 				."cancellation | " cancellation@comment type
 			} {
 				."cancellation" drop
