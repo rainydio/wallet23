@@ -41,9 +41,9 @@ constant public_key
 	dup null? { drop } {
 		dup req@cancellation? {
 			dup cancellation@comment? {
-				."cancellation | " cancellation@comment type
+				."CANCELLATION | " cancellation@comment type
 			} {
-				."cancellation" drop
+				."CANCELLATION" drop
 			} cond
 		} {
 			dup msg@amount .GR
@@ -52,12 +52,12 @@ constant public_key
 
 				msg@body
 				dup body@simple_transfer? {
-					."| simple transfer | " simple_transfer@comment type
+					."| SIMPLE TRANSFER | " simple_transfer@comment type
 				} {
 					dup body@replace_key? {
-						."| replace key | " dup replace_key@old_key key. ." => " replace_key@new_key key.
+						."| REPLACE KEY | " dup replace_key@old_key key. ." => " replace_key@new_key key.
 					} {
-						."| unknown op " drop
+						."| UNKNOWN OP " drop
 					} cond
 				} cond
 			} {
@@ -65,9 +65,9 @@ constant public_key
 
 				msg@body
 				dup body@simple_transfer? {
-					."| simple transfer | " simple_transfer@comment type
+					."| SIMPLE TRANSFER | " simple_transfer@comment type
 				} {
-					."| op " body@op 16 (0x.) type
+					."| OP " body@op 16 (0x.) type
 				} cond
 			} cond
 		} cond
