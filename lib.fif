@@ -22,7 +22,7 @@
 } : nullref@
 
 {
-	2dup <s s-fits? {
+	2dup <s sbitrefs rot brembitrefs rot >= -rot < and {
 		swap false 1 u, swap <s s,
 	} {
 		swap true 1 u, swap ref,
